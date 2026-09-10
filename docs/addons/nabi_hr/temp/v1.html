@@ -1,0 +1,132 @@
+<t t-name="nabi_hr.portal_attendance_template">
+    <t t-set="no_footer" t-value="True"/>
+    <t t-call="portal.portal_layout">
+        <t t-call="portal.portal_breadcrumbs" t-set="breadcrumbs">
+            <t t-set="title">Attendance</t>
+        </t>
+        
+        <div class="container mt-4">
+          <h3>Attendances</h3>
+          <div id="attendance-portal">
+          <table class="table table-striped">
+                <thead class="thead-light">
+                    <tr>
+                        <th colspan="2">Employé</th>
+                        <th>Couloir</th>
+                        <th>Porte</th>
+                        <th>Restaurant</th>
+                        <th>Exceptions</th>
+                        <th colspan="2">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="attendance-list">
+          
+          </tbody>
+          </table>
+          </div>
+          
+          <button id="load-more" class="btn btn-primary mt-3">Load More</button>
+        </div>
+
+        
+        <!-- <div class="o_portal_my_attendance">
+            <h3 class="mb-4">Attendance Exceptions -   
+                <t t-esc="current_month"/>
+            </h3>
+            <div class="mb-3">
+                <a t-att-href="'/my/attendance/%s' % prev_month" class="btn btn-outline-primary btn-sm">← Previous </a>
+                <a t-att-href="'/my/attendance/%s' % next_month" class="btn btn-outline-primary btn-sm ml-2">Next  →</a>
+            </div>
+            <table class="table table-sm table-bordered table-striped">
+                <thead class="thead-light">
+                    <tr>
+                        <th colspan="2" col="3">Employé</th>
+                        <th col="6">Couloir</th>
+                        <th col="2">Porte</th>
+                        <th>Restaurant</th>
+                        <th>Exceptions</th>
+                        <th colspan="2">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <t t-foreach="portal_data.items()" t-as="item">
+                        <t t-set="key" t-value="item[0]"/>
+                        <t t-set="data" t-value="item[1]"/>
+                        <tr>
+                            <td col="1">
+                                <t t-esc="f'{key[0].barcode}'"/>
+                            </td>
+                            <td col="2">
+                                <t t-esc="f'{key[0].name}'"/>
+                            </td>
+                            <td>
+                                <t t-foreach="data['punches']" t-as="p">
+                                    
+                                    <span class="badge badge-danger mr-1">
+                                     <i class="fa fa-arrow-up text-danger" t-if="p['sens'] and p['sens']=='in'"/>
+                                     <i class="fa fa-arrow-down text-success" t-if="p['sens'] and p['sens']=='out'"/>
+                                        <t t-esc="(not p['terminal_alias'] and 'M ' or '') +   p['punch_time'].strftime('%H:%M:%S')"/>
+                                        <form method="post" t-att-action="f'/my/attendance/delete/{p['id']}'" style="display:inline;">
+                                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                            <i class="fa fa-times text-danger" data-action="delete" t-att-data-id="p['id']"/>
+                                        </form>
+                                    </span>
+                                </t>
+                            </td>
+                            <td>
+                                <t t-foreach="data['entrance_punches']" t-as="p">
+
+                                    <span class="badge badge-danger mr-1">
+                                     <i class="fa fa-arrow-up text-danger" t-if="p['sens'] and p['sens']=='in'"/>
+                                     <i class="fa fa-arrow-down text-success" t-if="p['sens'] and p['sens']=='out'"/>
+                                        <t t-esc="(not p['terminal_alias'] and 'M ' or '') +   p['punch_time'].strftime('%H:%M:%S')"/>
+                                        <form method="post" t-att-action="f'/my/attendance/delete/{p['id']}'" style="display:inline;">
+                                            <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                            <i class="fa fa-times text-danger" data-action="delete" t-att-data-id="p['id']"/>
+                                        </form>
+                                    </span>
+                                </t>
+                            </td>
+                            <td>
+                                <t t-foreach="data['restaurant'][:1]" t-as="p">
+                                    <span class="badge badge-danger mr-1" data-action="delete" t-att-data-id="p['id']">
+                                    <i class="fa fa-cutlery text-alert"/>
+                                        <t t-esc="p['punch_time'].strftime('%H:%M')"/>
+                                        <a t-att-href="f'?delete={p['id']}'" class="text-white ml-1">
+                                            <i class="fa fa-times"/>
+                                        </a>
+                                    </span>
+                                </t>
+                            </td>
+                            <td>
+                                <t t-esc="data['exceptions']"/>
+                            </td>
+                            <td>
+                                
+                                <t t-if="data.get('buttons', {}).get('add_punch')">
+                                        <span data-action="add_punch" t-att-data-curdate="current_month" t-att-data-empId="data['emp_id']">
+                                            <a href="#" class="btn btn-sm btn-primary me-1">Add Punch</a>
+                                        </span>
+                                    </t>
+                            </td>
+                            
+                            <td>
+                                <t data-action="add_leave" t-att-data-curdate="current_month" t-att-data-empId="data['emp_id']" t-if="data.get('buttons', {}).get('add_leave')">
+                                    <a href="#" class="btn btn-sm btn-warning me-1">Add Leave</a>
+                                </t>
+                            </td>
+                        </tr>
+                       
+                    </t>
+                </tbody>
+            </table>
+        </div> -->
+        
+        
+         <!--
+            <tr><td><t t-esc="request.env['hr.employee'].sudo().browse(data['employee_id']).name"/></td><td><t t-esc="data['day']"/></td><td><t t-foreach="data['punches']" t-as="p"><span class="badge badge-primary mr-1"><t t-esc="p[11:16]"/><a href="#" class="text-white ml-1"><i class="fa fa-times"/></a></span></t></td><td><t t-foreach="data['entrance_punches']" t-as="p"><span class="badge badge-info mr-1"><t t-esc="p[11:16]"/><a href="#" class="text-white ml-1"><i class="fa fa-times"/></a></span></t></td><td><t t-esc="data['restaurant'] and data['restaurant'][11:16] or '-'"/></td><td><t t-esc="data['exceptions'] or '-'"/></td><td><div class="dropdown"><button class="btn btn-sm btn-secondary dropdown-toggle" type="button" data-toggle="dropdown">
+                    Actions
+                  </button><div class="dropdown-menu"><t t-foreach="data['buttons']" t-as="btn"><a class="dropdown-item" href="#" t-esc="btn"/></t></div></div></td></tr>
+            -->
+    </t>
+</t>

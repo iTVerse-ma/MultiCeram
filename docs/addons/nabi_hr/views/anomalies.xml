@@ -1,0 +1,318 @@
+<odoo>
+    <template id="portal_attendance_template" name="Pointage :: Anomalies" >
+    <!-- Désactivation des éléments standard du portail -->
+    <t t-set="no_header" t-value="True"/>
+    <t t-set="no_menu" t-value="True"/>
+    <t t-set="no_footer" t-value="True"/>
+    <t t-set="full_width" t-value="True"/>
+    <t t-set="portal_data" t-value="request.env['zk.transaction']"/>
+    <t t-set="portal_punches" t-value="request.env['zk.transaction']"/>
+    <t t-call="website.layout">
+        <div class="container-fluid my-4" id="attendance-portal">
+            <div class="row">
+                <!-- 🔹 Panneau latéral de recherche -->
+                
+                <div class="col-md-3">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-primary text-white">
+                            <i class="fa fa-search me-2"/>Filtres
+                        
+                        </div>
+                       
+                        <div class="mb-2 card-body">
+                            <label class="form-label small">Employé</label>
+                            <input type="text" id="attendance_search" class="form-control form-control-sm" placeholder="Nom employé..."/>
+                        </div>
+    
+                        <div class="mb-2 card-body">
+                            <label class="form-label small">Type</label>
+                            <select id="attendance_filter" class="form-select form-select-sm">
+                                <option value="all">Tous</option>
+                                <option value="check_in">Check In</option>
+                                <option value="check_out">Check Out</option>
+                            </select>
+                        </div>
+                    </div> 
+               
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-primary text-white">
+                            <i class="fa fa-filter me-2"/>Filtres avancés
+                        
+                        </div>
+                        <div class="card-body">
+                            <!--
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Employé</label>
+                                <select id="filter_employee" class="form-select form-select-sm">
+                                    <option value="all">Tous</option>
+                                 
+                                   <t t-foreach="employees" t-as="emp"><option t-att-value="emp.id" t-esc="f'{emp.barcode}-{emp.name}'"/></t> 
+                                   
+                                </select>
+                            </div>
+                            -->
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Terminal</label>
+                                <select id="filter_terminal" class="form-select form-select-sm" multiple="1">
+                                 <t t-foreach="terminals" t-as="t"><option t-att-value="t.id" t-esc="t.alias"/></t>
+                                   
+                                </select>
+                                <small class="text-muted">Sélection multiple possible</small>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Date</label>
+                                <div class="d-flex gap-2">
+                                    <input type="date" id="filter_from" class="form-control form-control-sm" t-att-value="start_day"/>
+                                    <!-- <input type="date" id="filter_to" class="form-control form-control-sm" t-att-value="end_day"/> -->
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="filter_doors"/>
+                                    <label class="form-check-label">Porte principale ?</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="filter_restaurant"/>
+                                    <label class="form-check-label">Restaurant ?</label>
+                                </div>
+                            </div>
+                            
+                          
+                            <div class="d-grid">
+                                <button id="filter_apply" class="btn btn-primary btn-sm">
+                                    <i class="fa fa-search me-1"/>Appliquer
+                                
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- 🔹 Zone principale -->
+                
+                
+                <div class="col-md-9">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h2 class="mb-0">Pointages :: Anomalies</h2>
+                        <div>
+                            <button id="prev-day" class="btn btn-outline-secondary btn-sm me-1">
+                                <i class="fa fa-chevron-left"/> Jour précédent
+                            
+                            </button>
+                            <button id="next-day" class="btn btn-outline-secondary btn-sm">
+                                Jour suivant 
+                                <i class="fa fa-chevron-right"/>
+                            </button>
+                        </div>
+                    </div>
+                    <!-- Tableau principal -->
+                    <table class="table table-striped table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th>Employé</th>
+                                <th>Couloir</th>
+                                <th>Porte</th>
+                                <th>Restaurant</th>
+                                <th>Dernier Punch</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="attendance-list">
+                            <!--
+                            <AttendancePortalLine record="test"/>
+                            -->
+                            <tr id="attendance-spinner-row" style="display:none;" t-on-click="showPunchDialog(record)" class="punch-row cursor-pointer">
+                                <td colspan="6" class="text-center py-2">
+                                    <i class="fa fa-spinner fa-spin text-secondary"/>
+                                    <span class="ms-2 text-muted">Chargement...</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="modal fade" id="punchActionModal" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content shadow-lg rounded-4 border-0">
+                                <div class="modal-header bg-primary text-white">
+                                    <h5 class="modal-title">Actions sur le pointage</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"/>
+                                </div>
+                                <div class="modal-body">
+                                    <div id="punch-actions-container"/></div>
+                                <div class="modal-footer">
+                                    <button class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-center mt-3">
+                        <button id="load-more" class="btn btn-outline-primary btn-sm">
+                            <i class="fa fa-plus-circle me-1"/>Charger plus
+                        
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </t>
+    </template>
+   <template id="portal_attendance_template2" name="Pointage :: Anomalies" >
+        <!-- Désactivation des éléments standard du portail -->
+        <t t-set="no_header" t-value="True"/>
+        <t t-set="no_menu" t-value="True"/>
+        <t t-set="no_footer" t-value="True"/>
+        <t t-set="full_width" t-value="True"/>
+        <t t-set="portal_data" t-value="request.env['zk.transaction']"/>
+        <t t-set="portal_punches" t-value="request.env['zk.transaction']"/>
+        <t t-call="website.layout">
+            <div class="container-fluid my-4" id="attendance-portal">
+                <div class="row">
+                    <!-- 🔹 Panneau latéral de recherche -->
+                    
+                    <div class="col-md-3">
+                        <div class="card shadow-sm">
+                            <div class="card-header bg-primary text-white">
+                                <i class="fa fa-filter me-2"/>🔍Filtres
+                            
+                            </div>
+                        
+                            <div class="mb-2 card-body">
+                                <label class="form-label small">Employé</label>
+                                <input type="text" id="attendance_search" class="form-control form-control-sm" placeholder="Nom employé..."/>
+                            </div>
+        
+                            <div class="mb-2 card-body">
+                                <label class="form-label small">Type</label>
+                                <select id="attendance_filter" class="form-select form-select-sm">
+                                    <option value="all">Tous</option>
+                                    <option value="check_in">Check In</option>
+                                    <option value="check_out">Check Out</option>
+                                </select>
+                            </div>
+                        </div> 
+                
+                        <div class="card shadow-sm">
+                            <div class="card-header bg-primary text-white">
+                                <i class="fa fa-filter me-2"/>Filtres avancés
+                            
+                            </div>
+                            <div class="card-body">
+                                <!--
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold">Employé</label>
+                                    <select id="filter_employee" class="form-select form-select-sm">
+                                        <option value="all">Tous</option>
+                                    
+                                    <t t-foreach="employees" t-as="emp"><option t-att-value="emp.id" t-esc="f'{emp.barcode}-{emp.name}'"/></t> 
+                                    
+                                    </select>
+                                </div>
+                                -->
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold">Terminal</label>
+                                    <select id="filter_terminal" class="form-select form-select-sm" multiple="1">
+                                    <t t-foreach="terminals" t-as="t"><option t-att-value="t.id" t-esc="t.alias"/></t>
+                                    
+                                    </select>
+                                    <small class="text-muted">Sélection multiple possible</small>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <label class="form-label fw-semibold">Période</label>
+                                    <div class="d-flex gap-2">
+                                        <input type="date" id="filter_from" class="form-control form-control-sm" t-att-value="start_day"/>
+                                        <input type="date" id="filter_to" class="form-control form-control-sm" t-att-value="end_day"/>
+                                    </div>
+                                </div>
+                                
+                                <div class="mb-3">
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="filter_doors"/>
+                                        <label class="form-check-label">Prendre en compte les transactions de porte</label>
+                                    </div>
+                                    <div class="form-check">
+                                        <input class="form-check-input" type="checkbox" id="filter_restau"/>
+                                        <label class="form-check-label">Prendre en compte le restaurant</label>
+                                    </div>
+                                </div>
+                                
+                            
+                                <div class="d-grid">
+                                    <button id="filter_apply" class="btn btn-primary btn-sm">
+                                        <i class="fa fa-search me-1"/>Appliquer
+                                    
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- 🔹 Zone principale -->
+                    
+                    
+                    <div class="col-md-9">
+                        <div class="d-flex justify-content-between align-items-center mb-3">
+                            <h2 class="mb-0">Pointages :: Anomalies</h2>
+                            <div>
+                                <button id="prev-day" class="btn btn-outline-secondary btn-sm me-1">
+                                    <i class="fa fa-chevron-left"/> Jour précédent
+                                
+                                </button>
+                                <button id="next-day" class="btn btn-outline-secondary btn-sm">
+                                    Jour suivant 
+                                    <i class="fa fa-chevron-right"/>
+                                </button>
+                            </div>
+                        </div>
+                        <!-- Tableau principal -->
+                        <table class="table table-striped table-hover">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Employé</th>
+                                    <th>Couloir</th>
+                                    <th>Porte</th>
+                                    <th>Restaurant</th>
+                                    <th>Dernier Punch</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody id="attendance-list">
+                                <!--
+                                <AttendancePortalLine record="test"/>
+                                -->
+                                <tr id="attendance-spinner-row" style="display:none;" t-on-click="showPunchDialog(record)" class="punch-row cursor-pointer">
+                                    <td colspan="6" class="text-center py-2">
+                                        <i class="fa fa-spinner fa-spin text-secondary"/>
+                                        <span class="ms-2 text-muted">Chargement...</span>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                        <div class="modal fade" id="punchActionModal" tabindex="-1" aria-hidden="true">
+                            <div class="modal-dialog modal-dialog-centered">
+                                <div class="modal-content shadow-lg rounded-4 border-0">
+                                    <div class="modal-header bg-primary text-white">
+                                        <h5 class="modal-title">Actions sur le pointage</h5>
+                                        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"/>
+                                    </div>
+                                    <div class="modal-body">
+                                        <div id="punch-actions-container"/></div>
+                                    <div class="modal-footer">
+                                        <button class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-center mt-3">
+                            <button id="load-more" class="btn btn-outline-primary btn-sm">
+                                <i class="fa fa-plus-circle me-1"/>Charger plus
+                            
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </t>
+    </template> 
+
+
+</odoo>

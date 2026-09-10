@@ -1,0 +1,35 @@
+<templates xml:space="preserve">
+    <t t-name="PortalAttendanceLine" owl="1">
+        <tr>
+            <td><t t-esc="props.record.employee_name"/></td>
+            <td><t t-esc="props.record.check_in"/></td>
+            <td><t t-esc="props.record.check_out"/></td>
+            <td>
+                <t t-foreach="props.record.punches || []" t-as="punch">
+                    <span class="badge bg-success ms-1">
+                        <t t-esc="punch"/>
+                    </span>
+                </t>
+            </td>
+            <td>
+                <button class="btn btn-sm btn-danger"
+                        t-att-data-id="props.record.id">
+                    <i class="fa fa-trash"/>
+                </button>
+                <button class="btn btn-sm btn-success"
+                        t-att-data-id="props.record.id"
+                        t-att-data-empid="props.record.emp_id"
+                        t-att-data-curdate="props.dateStr">
+                    <i class="fa fa-plus"/>
+                </button>
+                <button class="btn btn-sm btn-warning"
+                        t-att-data-empid="props.record.emp_id"
+                        t-att-data-curdate="props.dateStr">
+                    <i class="fa fa-plane"/>
+                </button>
+            </td>
+        </tr>
+    </t>
+
+    
+</templates>
