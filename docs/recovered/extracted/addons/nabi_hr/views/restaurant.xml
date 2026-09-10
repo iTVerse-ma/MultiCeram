@@ -1,0 +1,29 @@
+<odoo>
+    <template id="portal_my_restaurant" name="Gestion de restaurant">
+        <t t-call="portal.portal_layout">
+            <t t-set="breadcrumbs_searchbar" t-value="True"/>
+
+            <t t-call="portal.portal_searchbar">
+                <t t-set="title">Mon restaurant</t>
+            </t>
+            <t t-if="not records">
+                <p class="alert alert-warning">There is currently no record found !</p>
+            </t>
+            <t tt-if="records" t-call="portal.portal_table">
+                <thead>
+                    <tr class="active">
+                        <th name="invoice_number">Invoice #</th>
+                        <th name="invoice_date">Invoice Date</th>
+                        <th name="due_date" class='d-none d-md-table-cell'>Due Date</th>
+                        <th name="amount_due" class="text-end pe-3">Amount Due</th>
+                        <th name="status">Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                </tbody>
+            </t>
+        </t>
+
+    </template>
+
+</odoo>

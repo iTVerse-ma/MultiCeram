@@ -1,0 +1,218 @@
+<odoo>
+    <template id="portal_my_leaves" name="Mes Congés">
+
+        <t t-call="portal.portal_layout">
+            <div class="container my-4">
+                <h2 class="mb-4 text-center">📋 Mes Congés</h2>
+
+                <t t-if="not leaves">
+                    <div class="alert alert-info text-center">
+                    Aucun congé enregistré.
+                    </div>
+                </t>
+
+                <t t-foreach="leaves" t-as="leave">
+                    <div class="card shadow-sm rounded-3 mb-3 p-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="fw-bold">
+                                <t t-esc="leave.holiday_status_id.name"/>
+                            </h5>
+                            <span t-attf-class="badge          #{'bg-warning text-dark' if leave.state == 'confirm' else ''}         #{'bg-success' if leave.state == 'validate' else ''}         #{'bg-danger' if leave.state == 'refuse' else ''}">
+                                <t t-esc="leave.state"/>
+                            </span>
+                        </div>
+
+                        <p class="mt-2 mb-1">
+                        🗓️                            <t t-esc="leave.date_from"/>
+ →                            <t t-esc="leave.date_to"/>
+                        </p>
+                        <p class="text-muted mb-2">
+                            <t t-esc="leave.name or 'Sans motif'"/>
+                        </p>
+
+                        <!-- Action buttons -->
+                        <div class="d-flex flex-wrap gap-2">
+                            <form method="post" t-att-action="'/my/leaves/action/reset' ">
+                                <input type="hidden" name="leave_id" t-att-value="leave.id"/>
+                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                <button class="btn btn-outline-primary btn-sm">Réinitialiser</button>
+                            </form>
+
+                            <form method="post" t-att-action="'/my/leaves/action/refuse' ">
+                                <input type="hidden" name="leave_id" t-att-value="leave.id"/>
+                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                <button class="btn btn-outline-primary btn-sm">Refuser</button>
+                            </form>
+
+                            <form method="post" t-att-action="'/my/leaves/action/cancel' ">
+                                <input type="hidden" name="leave_id" t-att-value="leave.id"/>
+
+                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                <button class="btn btn-outline-danger btn-sm">Annuler</button>
+                            </form>
+
+                            <t t-if="request.env.user.has_group('hr_holidays.group_hr_holidays_user')">
+                                <form method="post" t-att-action="'/my/leaves/action/validate_manager' ">
+                                    <input type="hidden" name="leave_id" t-att-value="leave.id"/>
+
+                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                    <button class="btn btn-success btn-sm">Valider Resp.</button>
+                                </form>
+                            </t>
+
+                            <t t-if="request.env.user.has_group('hr_holidays.group_hr_holidays_manager')">
+                                <form method="post" t-att-action="'/my/leaves/action/validate_hr'">
+                                    <input type="hidden" name="leave_id" t-att-value="leave.id"/>
+
+                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                    <button class="btn btn-success btn-sm">Valider RH</button>
+                                </form>
+                            </t>
+                        </div>
+                    </div>
+                </t>
+
+                <div class="text-center mt-4">
+                    <a href="/my/leaves/new" class="btn btn-primary btn-lg w-100 py-3" style="border-radius:12px;">
+                    Faire une demande
+                    </a>
+                </div>
+            </div>
+
+
+        </t>
+
+    </template>
+    <template id="portal_my_authorisation" name="Mes authorisations">
+
+        <t t-call="portal.portal_layout">
+            <div class="container my-4">
+                <h2 class="mb-4 text-center">📋 Mes authorisations</h2>
+
+                <t t-if="not leaves">
+                    <div class="alert alert-info text-center">
+                    Aucune authorisation enregistré.
+                    </div>
+                </t>
+
+                <t t-foreach="leaves" t-as="leave">
+                    <div class="card shadow-sm rounded-3 mb-3 p-3">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <h5 class="fw-bold">
+                                <t t-esc="leave.holiday_status_id.name"/>
+                            </h5>
+                            <span t-attf-class="badge          #{'bg-warning text-dark' if leave.state == 'confirm' else ''}         #{'bg-success' if leave.state == 'validate' else ''}         #{'bg-danger' if leave.state == 'refuse' else ''}">
+                                <t t-esc="leave.state"/>
+                            </span>
+                        </div>
+
+                        <p class="mt-2 mb-1">
+                        🗓️                            <t t-esc="leave.date_from"/>
+ →                            <t t-esc="leave.date_to"/>
+                        </p>
+                        <p class="text-muted mb-2">
+                            <t t-esc="leave.name or 'Sans motif'"/>
+                        </p>
+
+                        <!-- Action buttons -->
+                        <div class="d-flex flex-wrap gap-2">
+                            <form method="post" t-att-action="'/my/leaves/action/reset' ">
+                                <input type="hidden" name="leave_id" t-att-value="leave.id"/>
+                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                <button class="btn btn-outline-primary btn-sm">Réinitialiser</button>
+                            </form>
+
+                            <form method="post" t-att-action="'/my/leaves/action/refuse' ">
+                                <input type="hidden" name="leave_id" t-att-value="leave.id"/>
+                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                <button class="btn btn-outline-primary btn-sm">Refuser</button>
+                            </form>
+
+                            <form method="post" t-att-action="'/my/leaves/action/cancel' ">
+                                <input type="hidden" name="leave_id" t-att-value="leave.id"/>
+
+                                <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                <button class="btn btn-outline-danger btn-sm">Annuler</button>
+                            </form>
+
+                            <t t-if="request.env.user.has_group('hr_holidays.group_hr_holidays_user')">
+                                <form method="post" t-att-action="'/my/leaves/action/validate_manager' ">
+                                    <input type="hidden" name="leave_id" t-att-value="leave.id"/>
+
+                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                    <button class="btn btn-success btn-sm">Valider Resp.</button>
+                                </form>
+                            </t>
+
+                            <t t-if="request.env.user.has_group('hr_holidays.group_hr_holidays_manager')">
+                                <form method="post" t-att-action="'/my/leaves/action/validate_hr'">
+                                    <input type="hidden" name="leave_id" t-att-value="leave.id"/>
+
+                                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                                    <button class="btn btn-success btn-sm">Valider RH</button>
+                                </form>
+                            </t>
+                        </div>
+                    </div>
+                </t>
+
+                <div class="text-center mt-4">
+                    <a href="/my/leaves/new" class="btn btn-primary btn-lg w-100 py-3" style="border-radius:12px;">
+                    Faire une demande
+                    </a>
+                </div>
+            </div>
+
+
+        </t>
+
+    </template>
+
+    <template id="portal_new_leave_form" name="Mes Congés :: formulaire" >
+            <t t-call="portal.portal_layout">
+                <t t-set="additional_title">Contact Details</t>
+                <form method="post" class="o_portal_leave_form p-4">
+                    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+
+                    <t t-if="error">
+                        <div class="alert alert-danger" role="alert">
+                            <t t-esc="error"/>
+                        </div>
+                    </t>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Type de congé</label>
+                        <select name="holiday_status_id" class="form-select form-control-lg">
+                            <t t-foreach="request.env['hr.leave.type'].search([])" t-as="lt">
+                                <option t-att-value="lt.id">
+                                    <t t-esc="lt.name"/>
+                                </option>
+                            </t>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Du</label>
+                        <input type="date" name="date_from" class="form-control form-control-lg"/>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Au</label>
+                        <input type="date" name="date_to" class="form-control form-control-lg"/>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label fw-bold">Motif</label>
+                        <textarea name="reason" rows="3" class="form-control form-control-lg"/>
+                    </div>
+
+                    <button type="submit" class="btn btn-primary btn-lg w-100 py-3 mt-3" style="border-radius: 12px;">
+      📅 Envoyer la demande
+                    </button>
+                </form>
+
+            </t>
+       
+    </template>
+
+</odoo>

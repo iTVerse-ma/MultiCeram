@@ -1,0 +1,60 @@
+<odoo>
+  <data>
+    <!-- explicit list view definition -->
+<!--
+    <record model="ir.ui.view" id="nabi_hr.list">
+      <field name="name">nabi_hr list</field>
+      <field name="model">nabi_hr.nabi_hr</field>
+      <field name="arch" type="xml">
+        <list>
+          <field name="name"/>
+          <field name="value"/>
+          <field name="value2"/>
+        </list>
+      </field>
+    </record>
+-->
+
+    <!-- actions opening views on models -->
+<!--
+    <record model="ir.actions.act_window" id="nabi_hr.action_window">
+      <field name="name">nabi_hr window</field>
+      <field name="res_model">nabi_hr.nabi_hr</field>
+      <field name="view_mode">list,form</field>
+    </record>
+-->
+
+    <!-- server action to the one above -->
+<!--
+    <record model="ir.actions.server" id="nabi_hr.action_server">
+      <field name="name">nabi_hr server</field>
+      <field name="model_id" ref="model_nabi_hr_nabi_hr"/>
+      <field name="state">code</field>
+      <field name="code">
+        action = {
+          "type": "ir.actions.act_window",
+          "view_mode": "list,form",
+          "res_model": model._name,
+        }
+      </field>
+    </record>
+-->
+
+    <!-- Top menu item -->
+<!--
+    <menuitem name="nabi_hr" id="nabi_hr.menu_root"/>
+-->
+    <!-- menu categories -->
+<!--
+    <menuitem name="Menu 1" id="nabi_hr.menu_1" parent="nabi_hr.menu_root"/>
+    <menuitem name="Menu 2" id="nabi_hr.menu_2" parent="nabi_hr.menu_root"/>
+-->
+    <!-- actions -->
+<!--
+    <menuitem name="List" id="nabi_hr.menu_1_list" parent="nabi_hr.menu_1"
+              action="nabi_hr.action_window"/>
+    <menuitem name="Server to list" id="nabi_hr" parent="nabi_hr.menu_2"
+              action="nabi_hr.action_server"/>
+-->
+  </data>
+</odoo>

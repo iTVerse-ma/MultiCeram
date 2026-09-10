@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<templates xml:space="preserve">
+    <t t-name="nabi_hr.portal_attendance_line">
+        <td t-esc="record.employee_name"/>
+        <td t-esc="record.check_in"/>
+        <td t-esc="record.check_out"/>
+        <td t-esc="record.punches"/>
+        
+        <td class="punches">
+            ${(record.punches || []).map(
+                punch => `<span class="badge bg-success ms-1">${punch}</span>`
+            ).join("")}
+        </td>
+        <td>
+            <button class="btn btn-sm btn-danger"
+                    data-action="delete" 
+                    data-id="${record.id}">
+                <i class="fa fa-trash"></i>
+            </button>
+            <button class="btn btn-sm btn-success"
+                    data-action="add_punch" 
+                    data-id="${record.id}" 
+                    data-empid="${record.emp_id}" 
+                    data-curdate="${dateStr}">
+                <i class="fa fa-plus"></i>
+            </button>
+            <button class="btn btn-sm btn-warning"
+                    data-action="add_leave" 
+                    data-empid="${record.emp_id}" 
+                    data-curdate="${dateStr}">
+                <i class="fa fa-plane"></i>
+            </button>
+        </td>
+    
+    </t>
+</templates>
