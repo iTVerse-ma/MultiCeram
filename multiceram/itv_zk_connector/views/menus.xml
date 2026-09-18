@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Présences > Gestion devient un menu déroulant ; sa première entrée est définie par itv_zk_attendance. -->
+    <menuitem id="menu_itv_zk_punch" name="Transactions" parent="hr_attendance.menu_hr_attendance_view_attendances_management"
+              action="itv_zk_punch_action" sequence="40"/>
+
+    <menuitem id="menu_itv_zk_backend" name="Connexions BioTime" parent="hr_attendance.menu_hr_attendance_configuration"
+              action="itv_zk_backend_action" sequence="20"/>
+    <menuitem id="menu_itv_zk_terminal" name="Terminaux BioTime" parent="hr_attendance.menu_hr_attendance_configuration"
+              action="itv_zk_terminal_action" sequence="30"/>
+    <menuitem id="menu_itv_zk_sync_log" name="Journal de synchronisation" parent="hr_attendance.menu_hr_attendance_configuration"
+              action="itv_zk_sync_log_action" sequence="40"/>
+    <menuitem id="menu_itv_zk_outbox" name="File d'envoi BioTime" parent="hr_attendance.menu_hr_attendance_configuration"
+              action="itv_zk_outbox_action" sequence="50"/>
+</odoo>

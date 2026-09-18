@@ -1,0 +1,23 @@
+{
+  "count": 3,
+  "next": "http://biotime-interne:8090/iclock/api/transactions/?page=2&page_size=2",
+  "previous": null,
+  "msg": "",
+  "code": 0,
+  "data": [
+    {
+      "id": 1001, "emp_code": "100001", "punch_time": "2026-09-10 06:02:11", "punch_state": "0",
+      "verify_type": 15, "work_code": null, "terminal_sn": "VDEFIX00000001", "terminal_alias": "Entrée gauche",
+      "area_alias": "Usine", "longitude": null, "latitude": null, "gps_location": "", "mobile": null,
+      "source": 1, "purpose": 1, "crc": null, "is_attendance": 1, "reserved": null,
+      "upload_time": "2026-09-10 06:02:15", "sync_status": 1, "sync_time": null, "emp": 5, "terminal": 7
+    },
+    {
+      "id": 1002, "emp_code": "100002", "punch_time": "2026-09-10 13:58:40", "punch_state": "1",
+      "verify_type": 1, "work_code": null, "terminal_sn": "PYAFIX00000002", "terminal_alias": "Restaurant",
+      "area_alias": "Usine", "longitude": null, "latitude": null, "gps_location": "", "mobile": null,
+      "source": 1, "purpose": 1, "crc": null, "is_attendance": 1, "reserved": null,
+      "upload_time": "2026-09-12 09:00:00", "sync_status": 1, "sync_time": null, "emp": 6, "terminal": 15
+    }
+  ]
+}

@@ -1,0 +1,189 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="itv_attendance_day_view_list_legacy" model="ir.ui.view">
+        <field name="name">itv.attendance.day.list</field>
+        <field name="model">itv.attendance.day</field>
+        <field name="arch" type="xml">
+            <list string="Pointage par employé" create="0" edit="0" delete="0"
+                  decoration-danger="lg_error" decoration-warning="anomaly_state == 'open'"
+                  decoration-muted="lg_absent_day and not lg_error">
+                <header>
+                    <button name="action_propose_overtime" type="object" string="Proposer les heures supplémentaires" class="btn-secondary"/>
+                    <button name="%(itv_attendance_anomaly_wizard_action)d" type="action" string="Traiter les anomalies" class="btn-secondary"/>
+                    <button name="action_reopen_anomaly" type="object" string="Rouvrir les anomalies" class="btn-secondary"/>
+                    <button name="action_recompute_days" type="object" string="Recalculer" class="btn-secondary"/>
+                </header>
+                <field name="date"/>
+                <field name="weekday" string="Jour" optional="show"/>
+                <field name="employee_id" widget="many2one_avatar_employee"/>
+                <field name="department_id" optional="hide"/>
+                <field name="punch_summary" string="Pointages"/>
+                <field name="lg_first_punch" optional="hide"/>
+                <field name="lg_last_punch" optional="hide"/>
+                <field name="lg_heures" string="H.Prés" widget="float_time" sum="Total"/>
+                <field name="lg_heures25" string="H.Nor" widget="float_time" sum="Total"/>
+                <field name="lg_pause" string="Pause" widget="float_time" sum="Total"/>
+                <field name="lg_abs25" string="Abs." widget="float_time" sum="Total"
+                       decoration-danger="lg_abs25 &gt; 0" decoration-bf="lg_abs25 &gt; 0"/>
+                <field name="lg_hs" string="HS" widget="float_time" sum="Total"/>
+                <field name="lg_hs25" string="HS corr." widget="float_time" sum="Total"/>
+                <field name="overtime_hours" string="HS circuit" widget="float_time" sum="Total" optional="show"/>
+                <field name="overtime_state" string="Validation HS" widget="badge" optional="show" decoration-warning="overtime_state in ('submitted', 'validated_1')"
+                       decoration-success="overtime_state == 'validated_2'" decoration-danger="overtime_state == 'refused'"/>
+                <field name="lg_total_hs_declare" string="HS décl." widget="float_time" sum="Total" optional="hide"/>
+                <field name="lg_total_hs25" string="25 %" widget="float_time" sum="Total" optional="hide"/>
+                <field name="lg_hs50_column" string="50 % (jour)" widget="float_time" optional="hide"/>
+                <field name="lg_total_hs50" string="50 %" widget="float_time" sum="Total" optional="hide"/>
+                <field name="lg_total_hs100" string="100 %" widget="float_time" sum="Total" optional="hide"/>
+                <field name="has_leave" string="Congé" optional="show"/>
+                <field name="is_holiday" string="JF" optional="show"/>
+                <field name="is_rest_day" string="JR" optional="show"/>
+                <field name="anomaly_state" string="Anomalie" widget="badge" optional="show"
+                       decoration-warning="anomaly_state == 'open'" decoration-success="anomaly_state == 'justified'" decoration-muted="anomaly_state == 'ignored'"/>
+                <field name="anomaly_label" optional="hide"/>
+                <field name="anomaly_note" optional="hide"/>
+                <field name="lg_error" optional="show"/>
+                <field name="attendance_conflict" optional="hide"/>
+                <field name="lg_worked_day" string="Jours travaillés" sum="Jours travaillés" optional="hide"/>
+                <field name="lg_absent_day" string="Jours sans pointage" sum="Jours sans pointage" optional="hide"/>
+                <field name="lg_hs50" column_invisible="1"/>
+                <button name="action_open_punches" type="object" icon="fa-list-ul" title="Pointages de la journée"/>
+                <button name="action_add_punch" type="object" icon="fa-hand-pointer-o" title="Ajouter un pointage"/>
+                <button name="action_new_leave" type="object" icon="fa-plane" title="Nouveau congé"/>
+                <button name="action_toggle_rest_day" type="object" icon="fa-bed" title="Jour de repos (poser / retirer)"/>
+                <button name="action_propose_overtime" type="object" icon="fa-plus-circle" title="Proposer les heures supplémentaires"
+                        invisible="overtime_state or lg_error or (lg_hs25 &lt;= 0 and lg_hs50 &lt;= 0)"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="itv_attendance_day_view_list_anomalies" model="ir.ui.view">
+        <field name="name">itv.attendance.day.list.anomalies</field>
+        <field name="model">itv.attendance.day</field>
+        <field name="priority">20</field>
+        <field name="arch" type="xml">
+            <list string="Anomalies" create="0" edit="0" delete="0"
+                  decoration-warning="anomaly_state == 'open'" decoration-muted="anomaly_state == 'ignored'">
+                <header>
+                    <button name="%(itv_attendance_anomaly_wizard_action)d" type="action" string="Traiter les anomalies" class="btn-primary"/>
+                    <button name="action_reopen_anomaly" type="object" string="Rouvrir" class="btn-secondary"/>
+                    <button name="action_recompute_days" type="object" string="Recalculer" class="btn-secondary"/>
+                </header>
+                <field name="date"/>
+                <field name="weekday" string="Jour" optional="show"/>
+                <field name="employee_id" widget="many2one_avatar_employee"/>
+                <field name="department_id" optional="show"/>
+                <field name="punch_summary" string="Pointages"/>
+                <field name="anomaly_label"/>
+                <field name="anomaly_state" string="État" widget="badge"
+                       decoration-warning="anomaly_state == 'open'" decoration-success="anomaly_state == 'justified'" decoration-muted="anomaly_state == 'ignored'"/>
+                <field name="anomaly_note" optional="show"/>
+                <field name="has_leave" string="Congé" optional="show"/>
+                <field name="is_holiday" string="JF" optional="hide"/>
+                <field name="is_rest_day" string="JR" optional="show"/>
+                <field name="lg_heures" string="H.Prés" widget="float_time" optional="hide"/>
+                <field name="lg_abs25" string="Abs." widget="float_time" optional="hide"/>
+                <button name="action_open_punches" type="object" icon="fa-list-ul" title="Pointages de la journée"/>
+                <button name="action_add_punch" type="object" icon="fa-hand-pointer-o" title="Ajouter un pointage"/>
+                <button name="action_new_leave" type="object" icon="fa-plane" title="Nouveau congé"/>
+                <button name="action_toggle_rest_day" type="object" icon="fa-bed" title="Jour de repos (poser / retirer)"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="itv_attendance_day_view_pivot_legacy" model="ir.ui.view">
+        <field name="name">itv.attendance.day.pivot.legacy</field>
+        <field name="model">itv.attendance.day</field>
+        <field name="arch" type="xml">
+            <pivot string="Calcul historique">
+                <field name="employee_id" type="row"/>
+                <field name="date" interval="month" type="col"/>
+                <field name="lg_worked_day" type="measure"/>
+                <field name="lg_heures25" type="measure" widget="float_time"/>
+                <field name="lg_abs25" type="measure" widget="float_time"/>
+                <field name="lg_hs25" type="measure" widget="float_time"/>
+                <field name="lg_total_hs_declare" type="measure" widget="float_time"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="itv_attendance_day_view_search" model="ir.ui.view">
+        <field name="name">itv.attendance.day.search</field>
+        <field name="model">itv.attendance.day</field>
+        <field name="arch" type="xml">
+            <search string="Journées de pointage">
+                <field name="employee_id"/>
+                <field name="department_id"/>
+                <filter string="Hier" name="yesterday" domain="[('date', '=', (context_today() - relativedelta(days=1)).strftime('%Y-%m-%d'))]"/>
+                <filter string="Ce mois" name="this_month" domain="[('date', '&gt;=', context_today().strftime('%Y-%m-01'))]"/>
+                <filter string="Mois dernier" name="last_month"
+                        domain="[('date', '&gt;=', (context_today() - relativedelta(months=1)).strftime('%Y-%m-01')), ('date', '&lt;', context_today().strftime('%Y-%m-01'))]"/>
+                <filter string="Date" name="date" date="date"/>
+                <separator/>
+                <filter string="Anomalies à traiter" name="anomaly_open" domain="[('anomaly_state', '=', 'open')]"/>
+                <filter string="Anomalies justifiées" name="anomaly_justified" domain="[('anomaly_state', '=', 'justified')]"/>
+                <filter string="Anomalies ignorées" name="anomaly_ignored" domain="[('anomaly_state', '=', 'ignored')]"/>
+                <separator/>
+                <filter string="Présence impaire" name="presence_anomaly" domain="[('lg_presence_anomaly', '=', True)]"/>
+                <filter string="Porte impaire" name="door_anomaly" domain="[('lg_door_anomaly', '=', True)]"/>
+                <filter string="Détecté présent" name="detected_present" domain="[('lg_detected_present', '=', True)]"/>
+                <filter string="Présence non reportée" name="attendance_conflict" domain="[('attendance_conflict', '=', True)]"/>
+                <filter string="Calcul impossible" name="with_error" domain="[('lg_error', '!=', False)]"/>
+                <separator/>
+                <filter string="Heures supplémentaires à proposer" name="overtime_to_propose"
+                        domain="[('overtime_state', '=', False), ('lg_error', '=', False), '|', ('lg_hs25', '&gt;', 0), ('lg_hs50', '&gt;', 0)]"/>
+                <filter string="Heures supplémentaires en circuit" name="overtime_in_circuit" domain="[('overtime_state', '!=', False)]"/>
+                <separator/>
+                <filter string="Jours de repos" name="rest_day" domain="[('is_rest_day', '=', True)]"/>
+                <filter string="Congés" name="leave" domain="[('has_leave', '=', True)]"/>
+                <filter string="Jours travaillés" name="worked" domain="[('lg_worked_day', '=', 1)]"/>
+                <group>
+                    <filter string="Employé" name="group_employee" context="{'group_by': 'employee_id'}"/>
+                    <filter string="Département" name="group_department" context="{'group_by': 'department_id'}"/>
+                    <filter string="Jour" name="group_date" context="{'group_by': 'date:day'}"/>
+                    <filter string="Mois" name="group_month" context="{'group_by': 'date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="itv_attendance_day_action" model="ir.actions.act_window">
+        <field name="name">Pointage par employé</field>
+        <field name="res_model">itv.attendance.day</field>
+        <field name="view_mode">list,pivot</field>
+        <field name="view_id" ref="itv_attendance_day_view_list_legacy"/>
+        <field name="search_view_id" ref="itv_attendance_day_view_search"/>
+        <field name="context">{'search_default_group_employee': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Aucune journée calculée</p>
+            <p>Chaque journée reprend la page « Pointage / employé » : pointages retenus, heures, pause, absence et heures supplémentaires selon les règles nabi_hr. Imprimez le PDF mensuel depuis le menu Imprimer.</p>
+        </field>
+    </record>
+
+    <record id="itv_attendance_day_action_anomalies" model="ir.actions.act_window">
+        <field name="name">Anomalies</field>
+        <field name="res_model">itv.attendance.day</field>
+        <field name="view_mode">list</field>
+        <field name="view_id" ref="itv_attendance_day_view_list_anomalies"/>
+        <field name="search_view_id" ref="itv_attendance_day_view_search"/>
+        <field name="domain">[('anomaly_state', '!=', False)]</field>
+        <field name="context">{'search_default_anomaly_open': 1, 'search_default_group_date': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Aucune anomalie à traiter</p>
+            <p>Pointages de présence ou de porte impairs, employés détectés présents sans pointage de présence, présences non reportées. Ajoutez le pointage manquant, ou justifiez / ignorez l'anomalie.</p>
+        </field>
+    </record>
+
+    <record id="itv_attendance_day_action_legacy" model="ir.actions.act_window">
+        <field name="name">Calcul historique</field>
+        <field name="res_model">itv.attendance.day</field>
+        <field name="view_mode">pivot,list</field>
+        <field name="view_id" eval="False"/>
+        <field name="context">{}</field>
+        <field name="search_view_id" ref="itv_attendance_day_view_search"/>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Aucune journée calculée</p>
+            <p>Totaux mensuels du calcul historique nabi_hr par employé ; téléchargez le tableau croisé pour la paie.</p>
+        </field>
+    </record>
+</odoo>

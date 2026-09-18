@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Horaires de travail natifs des profils nabi_hr (choix du 15/09/2026) ; modifiables dans Configuration. -->
+    <data noupdate="1">
+        <record id="resource_calendar_normal_44" model="resource.calendar">
+            <field name="name">Normal 44 h : lun–ven 8h–12h / 13h–17h, sam 8h–12h</field>
+            <field name="tz">Africa/Casablanca</field>
+            <field name="two_weeks_calendar" eval="False"/>
+            <field name="attendance_ids" eval="[(5, 0, 0),
+                (0, 0, {'name': 'Lundi matin', 'dayofweek': '0', 'hour_from': 8, 'hour_to': 12, 'day_period': 'morning'}),
+                (0, 0, {'name': 'Lundi pause', 'dayofweek': '0', 'hour_from': 12, 'hour_to': 13, 'day_period': 'lunch'}),
+                (0, 0, {'name': 'Lundi après-midi', 'dayofweek': '0', 'hour_from': 13, 'hour_to': 17, 'day_period': 'afternoon'}),
+                (0, 0, {'name': 'Mardi matin', 'dayofweek': '1', 'hour_from': 8, 'hour_to': 12, 'day_period': 'morning'}),
+                (0, 0, {'name': 'Mardi pause', 'dayofweek': '1', 'hour_from': 12, 'hour_to': 13, 'day_period': 'lunch'}),
+                (0, 0, {'name': 'Mardi après-midi', 'dayofweek': '1', 'hour_from': 13, 'hour_to': 17, 'day_period': 'afternoon'}),
+                (0, 0, {'name': 'Mercredi matin', 'dayofweek': '2', 'hour_from': 8, 'hour_to': 12, 'day_period': 'morning'}),
+                (0, 0, {'name': 'Mercredi pause', 'dayofweek': '2', 'hour_from': 12, 'hour_to': 13, 'day_period': 'lunch'}),
+                (0, 0, {'name': 'Mercredi après-midi', 'dayofweek': '2', 'hour_from': 13, 'hour_to': 17, 'day_period': 'afternoon'}),
+                (0, 0, {'name': 'Jeudi matin', 'dayofweek': '3', 'hour_from': 8, 'hour_to': 12, 'day_period': 'morning'}),
+                (0, 0, {'name': 'Jeudi pause', 'dayofweek': '3', 'hour_from': 12, 'hour_to': 13, 'day_period': 'lunch'}),
+                (0, 0, {'name': 'Jeudi après-midi', 'dayofweek': '3', 'hour_from': 13, 'hour_to': 17, 'day_period': 'afternoon'}),
+                (0, 0, {'name': 'Vendredi matin', 'dayofweek': '4', 'hour_from': 8, 'hour_to': 12, 'day_period': 'morning'}),
+                (0, 0, {'name': 'Vendredi pause', 'dayofweek': '4', 'hour_from': 12, 'hour_to': 13, 'day_period': 'lunch'}),
+                (0, 0, {'name': 'Vendredi après-midi', 'dayofweek': '4', 'hour_from': 13, 'hour_to': 17, 'day_period': 'afternoon'}),
+                (0, 0, {'name': 'Samedi matin', 'dayofweek': '5', 'hour_from': 8, 'hour_to': 12, 'day_period': 'morning'}),
+            ]"/>
+        </record>
+
+        <record id="resource_calendar_normal_48" model="resource.calendar">
+            <field name="name">Normal 48 h : lun–sam 8h–12h / 13h–17h</field>
+            <field name="tz">Africa/Casablanca</field>
+            <field name="two_weeks_calendar" eval="False"/>
+            <field name="attendance_ids" eval="[(5, 0, 0),
+                (0, 0, {'name': 'Lundi matin', 'dayofweek': '0', 'hour_from': 8, 'hour_to': 12, 'day_period': 'morning'}),
+                (0, 0, {'name': 'Lundi pause', 'dayofweek': '0', 'hour_from': 12, 'hour_to': 13, 'day_period': 'lunch'}),
+                (0, 0, {'name': 'Lundi après-midi', 'dayofweek': '0', 'hour_from': 13, 'hour_to': 17, 'day_period': 'afternoon'}),
+                (0, 0, {'name': 'Mardi matin', 'dayofweek': '1', 'hour_from': 8, 'hour_to': 12, 'day_period': 'morning'}),
+                (0, 0, {'name': 'Mardi pause', 'dayofweek': '1', 'hour_from': 12, 'hour_to': 13, 'day_period': 'lunch'}),
+                (0, 0, {'name': 'Mardi après-midi', 'dayofweek': '1', 'hour_from': 13, 'hour_to': 17, 'day_period': 'afternoon'}),
+                (0, 0, {'name': 'Mercredi matin', 'dayofweek': '2', 'hour_from': 8, 'hour_to': 12, 'day_period': 'morning'}),
+                (0, 0, {'name': 'Mercredi pause', 'dayofweek': '2', 'hour_from': 12, 'hour_to': 13, 'day_period': 'lunch'}),
+                (0, 0, {'name': 'Mercredi après-midi', 'dayofweek': '2', 'hour_from': 13, 'hour_to': 17, 'day_period': 'afternoon'}),
+                (0, 0, {'name': 'Jeudi matin', 'dayofweek': '3', 'hour_from': 8, 'hour_to': 12, 'day_period': 'morning'}),
+                (0, 0, {'name': 'Jeudi pause', 'dayofweek': '3', 'hour_from': 12, 'hour_to': 13, 'day_period': 'lunch'}),
+                (0, 0, {'name': 'Jeudi après-midi', 'dayofweek': '3', 'hour_from': 13, 'hour_to': 17, 'day_period': 'afternoon'}),
+                (0, 0, {'name': 'Vendredi matin', 'dayofweek': '4', 'hour_from': 8, 'hour_to': 12, 'day_period': 'morning'}),
+                (0, 0, {'name': 'Vendredi pause', 'dayofweek': '4', 'hour_from': 12, 'hour_to': 13, 'day_period': 'lunch'}),
+                (0, 0, {'name': 'Vendredi après-midi', 'dayofweek': '4', 'hour_from': 13, 'hour_to': 17, 'day_period': 'afternoon'}),
+                (0, 0, {'name': 'Samedi matin', 'dayofweek': '5', 'hour_from': 8, 'hour_to': 12, 'day_period': 'morning'}),
+                (0, 0, {'name': 'Samedi pause', 'dayofweek': '5', 'hour_from': 12, 'hour_to': 13, 'day_period': 'lunch'}),
+                (0, 0, {'name': 'Samedi après-midi', 'dayofweek': '5', 'hour_from': 13, 'hour_to': 17, 'day_period': 'afternoon'}),
+            ]"/>
+        </record>
+
+        <record id="resource_calendar_poste" model="resource.calendar">
+            <field name="name">Poste 3x8 (nabi) : flexible, 8 h par jour</field>
+            <field name="tz">Africa/Casablanca</field>
+            <field name="schedule_type">flexible</field>
+            <field name="two_weeks_calendar" eval="False"/>
+            <field name="attendance_ids" eval="[(5, 0, 0)]"/>
+            <field name="hours_per_day">8</field>
+            <field name="hours_per_week">48</field>
+            <field name="full_time_required_hours">48</field>
+        </record>
+
+        <record id="resource_calendar_securite" model="resource.calendar">
+            <field name="name">Sécurité (nabi) : flexible, 12 h par jour</field>
+            <field name="tz">Africa/Casablanca</field>
+            <field name="schedule_type">flexible</field>
+            <field name="two_weeks_calendar" eval="False"/>
+            <field name="attendance_ids" eval="[(5, 0, 0)]"/>
+            <field name="hours_per_day">12</field>
+            <field name="hours_per_week">48</field>
+            <field name="full_time_required_hours">48</field>
+        </record>
+    </data>
+</odoo>

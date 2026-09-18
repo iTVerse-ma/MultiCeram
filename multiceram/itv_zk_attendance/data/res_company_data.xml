@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Heures supplémentaires validées par le circuit N1 / N2 : réglage natif « Approuvé par le manager ». -->
+    <data noupdate="1">
+        <record id="base.main_company" model="res.company">
+            <field name="attendance_overtime_validation">by_manager</field>
+        </record>
+    </data>
+</odoo>

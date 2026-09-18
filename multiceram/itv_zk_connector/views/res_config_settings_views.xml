@@ -1,0 +1,23 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="res_config_settings_view_form_itv_zk" model="ir.ui.view">
+        <field name="name">res.config.settings.view.form.inherit.itv.zk</field>
+        <field name="model">res.config.settings</field>
+        <field name="inherit_id" ref="hr_attendance.res_config_settings_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//block[@name='overtime_settings']" position="after">
+                <block title="BioTime" name="itv_biotime_settings">
+                    <setting string="Connexions BioTime" help="Serveurs BioTime interrogés, lecture seule et santé de la synchronisation.">
+                        <button name="%(itv_zk_connector.itv_zk_backend_action)d" type="action" string="Connexions" class="btn-link" icon="oi-arrow-right"/>
+                    </setting>
+                    <setting string="Terminaux" help="L'usage (présence, porte, restaurant, magasin) et le sens de chaque terminal déterminent le calcul des journées.">
+                        <button name="%(itv_zk_connector.itv_zk_terminal_action)d" type="action" string="Terminaux" class="btn-link" icon="oi-arrow-right"/>
+                    </setting>
+                    <setting string="Journal de synchronisation" help="Résultat de chaque import BioTime : pointages lus, créés, erreurs.">
+                        <button name="%(itv_zk_connector.itv_zk_sync_log_action)d" type="action" string="Journal" class="btn-link" icon="oi-arrow-right"/>
+                    </setting>
+                </block>
+            </xpath>
+        </field>
+    </record>
+</odoo>

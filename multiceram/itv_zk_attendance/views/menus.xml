@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <menuitem id="menu_itv_attendance_anomalies" name="Anomalies" parent="hr_attendance.menu_hr_attendance_view_attendances_management"
+              action="itv_attendance_action_anomalies" sequence="25"/>
+    <menuitem id="menu_itv_overtime_lines" name="Heures supplémentaires" parent="hr_attendance.menu_hr_attendance_view_attendances_management"
+              action="itv_overtime_line_action" sequence="30"/>
+    <menuitem id="menu_itv_attendance_legacy" name="Calcul historique" parent="hr_attendance.menu_hr_attendance_reporting"
+              action="itv_attendance_day_action_legacy" sequence="30"/>
+    <menuitem id="menu_itv_overtime_validated" name="Heures supplémentaires validées" parent="hr_attendance.menu_hr_attendance_reporting"
+              action="itv_overtime_line_action_validated" sequence="35"/>
+    <!-- Mode kiosque non utilisé chez MultiCeram : les pointages viennent des pointeuses BioTime. -->
+    <record id="hr_attendance.menu_action_open_form" model="ir.ui.menu">
+        <field name="active" eval="False"/>
+    </record>
+</odoo>

@@ -1,0 +1,23 @@
+{
+  "count": 2,
+  "next": null,
+  "previous": null,
+  "msg": "",
+  "code": 0,
+  "data": [
+    {
+      "id": 7, "sn": "VDEFIX00000001", "ip_address": "10.10.0.21", "alias": "Entrée gauche",
+      "terminal_name": null, "fw_ver": null, "push_ver": "", "state": 1, "terminal_tz": 1,
+      "area": {"id": 1, "area_code": "1", "area_name": "Usine"},
+      "last_activity": "2026-09-01 08:00:00",
+      "user_count": null, "fp_count": null, "face_count": null, "palm_count": null, "transaction_count": null
+    },
+    {
+      "id": 15, "sn": "PYAFIX00000002", "ip_address": "10.10.0.35", "alias": "Restaurant",
+      "terminal_name": null, "fw_ver": null, "push_ver": "", "state": 1, "terminal_tz": 1,
+      "area": {"id": 1, "area_code": "1", "area_name": "Usine"},
+      "last_activity": "2026-09-01 08:00:00",
+      "user_count": null, "fp_count": null, "face_count": null, "palm_count": null, "transaction_count": null
+    }
+  ]
+}

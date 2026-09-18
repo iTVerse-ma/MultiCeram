@@ -1,0 +1,29 @@
+{
+  "count": 2,
+  "next": null,
+  "previous": null,
+  "msg": "",
+  "code": 0,
+  "data": [
+    {
+      "id": 5, "emp_code": "100001", "first_name": "Prénom", "last_name": "Fixture Un", "nickname": "",
+      "device_password": "", "card_no": "", "department": {"id": 1, "dept_code": "1", "dept_name": "Production"},
+      "dept_name": "Production", "position": null, "position_name": null, "hire_date": "2019-04-02",
+      "gender": "", "birthday": null, "verify_mode": null, "emp_type": null, "contact_tel": "", "office_tel": "",
+      "mobile": "", "national": "", "city": "", "address": "", "postcode": "", "email": "", "enroll_sn": "",
+      "ssn": "", "religion": "", "enable_att": true, "enable_overtime": true, "enable_holiday": true,
+      "dev_privilege": null, "self_password": "pbkdf2_sha256$fixture$not-a-real-hash", "flow_role": [],
+      "area": [{"id": 1, "area_code": "1", "area_name": "Usine"}], "area_name": "Usine", "app_status": 0, "app_role": null
+    },
+    {
+      "id": 6, "emp_code": "100003", "first_name": "Prénom", "last_name": "Fixture Trois", "nickname": "",
+      "device_password": "", "card_no": "", "department": {"id": 2, "dept_code": "2", "dept_name": "Émaillage"},
+      "dept_name": "Émaillage", "position": null, "position_name": null, "hire_date": "2024-01-15",
+      "gender": "", "birthday": null, "verify_mode": null, "emp_type": null, "contact_tel": "", "office_tel": "",
+      "mobile": "", "national": "", "city": "", "address": "", "postcode": "", "email": "", "enroll_sn": "",
+      "ssn": "", "religion": "", "enable_att": true, "enable_overtime": false, "enable_holiday": true,
+      "dev_privilege": null, "self_password": "pbkdf2_sha256$fixture$not-a-real-hash", "flow_role": [],
+      "area": [{"id": 1, "area_code": "1", "area_name": "Usine"}], "area_name": "Usine", "app_status": 0, "app_role": null
+    }
+  ]
+}

@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="hr_employee_view_form_itv_attendance" model="ir.ui.view">
+        <field name="name">hr.employee.form.itv.attendance</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="priority">120</field>
+        <field name="arch" type="xml">
+            <xpath expr="//group[@name='identification_group']" position="after">
+                <group string="Présences : calcul des journées" name="itv_attendance_rules" groups="hr.group_hr_user">
+                    <field name="itv_schedule_type"/>
+                    <field name="itv_day_hours" widget="float_time"/>
+                    <field name="itv_week_hours"/>
+                    <field name="itv_auto_pause"/>
+                    <field name="itv_overtime_eligible"/>
+                    <field name="itv_ignore_uhf"/>
+                    <button name="action_itv_recompute_legacy" type="object" string="Recalculer les journées" class="btn-link" icon="fa-refresh" colspan="2"/>
+                    <button name="action_itv_apply_profile_calendar" type="object" string="Appliquer l'horaire du profil" class="btn-link" icon="fa-calendar" colspan="2"/>
+                </group>
+            </xpath>
+            <!-- Heures supplémentaires issues du calcul historique : les règles natives ne s'appliquent pas. -->
+            <xpath expr="//field[@name='ruleset_id']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,88 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="itv_zk_sync_log_view_list" model="ir.ui.view">
+        <field name="name">itv.zk.sync.log.list</field>
+        <field name="model">itv.zk.sync.log</field>
+        <field name="arch" type="xml">
+            <list string="Journal de synchronisation" create="0" edit="0">
+                <field name="create_date" string="Date"/>
+                <field name="backend_id" optional="hide"/>
+                <field name="key"/>
+                <field name="trigger" optional="hide"/>
+                <field name="status" widget="badge" decoration-success="status == 'success'"
+                       decoration-danger="status == 'failed'" decoration-warning="status in ('partial', 'skipped_down')"/>
+                <field name="fetched"/>
+                <field name="created"/>
+                <field name="updated" optional="hide"/>
+                <field name="unchanged" optional="hide"/>
+                <field name="errors"/>
+                <field name="api_calls" optional="show"/>
+                <field name="duration" optional="show"/>
+                <field name="message" optional="hide"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="itv_zk_sync_log_view_form" model="ir.ui.view">
+        <field name="name">itv.zk.sync.log.form</field>
+        <field name="model">itv.zk.sync.log</field>
+        <field name="arch" type="xml">
+            <form string="Synchronisation" create="0" edit="0">
+                <sheet>
+                    <group>
+                        <group>
+                            <field name="backend_id"/>
+                            <field name="key"/>
+                            <field name="trigger"/>
+                            <field name="status"/>
+                            <field name="create_date" string="Date"/>
+                            <field name="duration"/>
+                        </group>
+                        <group>
+                            <field name="window_start"/>
+                            <field name="window_end"/>
+                            <field name="api_calls"/>
+                            <field name="fetched"/>
+                            <field name="created"/>
+                            <field name="updated"/>
+                            <field name="unchanged"/>
+                            <field name="errors"/>
+                        </group>
+                    </group>
+                    <field name="message" nolabel="1" invisible="not message"/>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="itv_zk_sync_log_view_search" model="ir.ui.view">
+        <field name="name">itv.zk.sync.log.search</field>
+        <field name="model">itv.zk.sync.log</field>
+        <field name="arch" type="xml">
+            <search string="Journal de synchronisation">
+                <field name="backend_id"/>
+                <field name="key"/>
+                <filter string="Échecs" name="failed" domain="[('status', '=', 'failed')]"/>
+                <filter string="Ignorés" name="skipped" domain="[('status', 'in', ('skipped_locked', 'skipped_down'))]"/>
+                <filter string="Avec erreurs" name="with_errors" domain="[('errors', '&gt;', 0)]"/>
+                <separator/>
+                <filter string="Aujourd'hui" name="today" domain="[('create_date', '&gt;=', context_today().strftime('%Y-%m-%d'))]"/>
+                <group>
+                    <filter string="Flux" name="group_key" context="{'group_by': 'key'}"/>
+                    <filter string="Résultat" name="group_status" context="{'group_by': 'status'}"/>
+                    <filter string="Connexion" name="group_backend" context="{'group_by': 'backend_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="itv_zk_sync_log_action" model="ir.actions.act_window">
+        <field name="name">Journal de synchronisation</field>
+        <field name="res_model">itv.zk.sync.log</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Aucune synchronisation</p>
+            <p>Chaque exécution des synchronisations BioTime est consignée ici pendant 90 jours.</p>
+        </field>
+    </record>
+</odoo>

@@ -1,0 +1,96 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="itv_zk_terminal_view_list" model="ir.ui.view">
+        <field name="name">itv.zk.terminal.list</field>
+        <field name="model">itv.zk.terminal</field>
+        <field name="arch" type="xml">
+            <list string="Terminaux" decoration-danger="offline_since" decoration-warning="usage == 'unclassified'">
+                <field name="alias"/>
+                <field name="sn"/>
+                <field name="area_name" optional="show"/>
+                <field name="usage"/>
+                <field name="direction"/>
+                <field name="is_uhf_bridge" optional="hide"/>
+                <field name="is_virtual" optional="hide"/>
+                <field name="timezone_override" optional="hide"/>
+                <field name="ip_address" optional="hide"/>
+                <field name="last_activity" optional="show"/>
+                <field name="offline_since" optional="show"/>
+                <field name="backend_id"/>
+                <field name="active" column_invisible="True"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="itv_zk_terminal_view_form" model="ir.ui.view">
+        <field name="name">itv.zk.terminal.form</field>
+        <field name="model">itv.zk.terminal</field>
+        <field name="arch" type="xml">
+            <form string="Terminal">
+                <sheet>
+                    <widget name="web_ribbon" title="Archivé" bg_color="text-bg-danger" invisible="active"/>
+                    <div class="oe_title">
+                        <label for="alias" string="Nom"/>
+                        <h1><field name="alias" placeholder="Entrée gauche"/></h1>
+                    </div>
+                    <group>
+                        <group string="Identification">
+                            <field name="backend_id" options="{'no_create': True}" readonly="biotime_id != 0"/>
+                            <field name="sn" readonly="biotime_id != 0"/>
+                            <field name="biotime_id" readonly="1"/>
+                            <field name="area_name" readonly="1"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                            <field name="active" invisible="1"/>
+                        </group>
+                        <group string="Usage dans les calculs">
+                            <field name="usage"/>
+                            <field name="direction"/>
+                            <field name="is_uhf_bridge"/>
+                            <field name="is_virtual"/>
+                        </group>
+                        <group string="État de la liaison">
+                            <field name="biotime_state_label"/>
+                            <field name="ip_address" readonly="1"/>
+                            <field name="last_activity"/>
+                            <field name="offline_since"/>
+                        </group>
+                        <group string="Fuseau horaire">
+                            <field name="terminal_tz_label"/>
+                            <field name="timezone_override" placeholder="Africa/Casablanca"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="itv_zk_terminal_view_search" model="ir.ui.view">
+        <field name="name">itv.zk.terminal.search</field>
+        <field name="model">itv.zk.terminal</field>
+        <field name="arch" type="xml">
+            <search string="Terminaux">
+                <field name="alias"/>
+                <field name="sn"/>
+                <field name="backend_id"/>
+                <filter string="À classer" name="unclassified" domain="[('usage', '=', 'unclassified')]"/>
+                <filter string="Hors ligne" name="offline" domain="[('offline_since', '!=', False)]"/>
+                <separator/>
+                <filter string="Archivés" name="inactive" domain="[('active', '=', False)]"/>
+                <group>
+                    <filter string="Usage" name="group_usage" context="{'group_by': 'usage'}"/>
+                    <filter string="Connexion" name="group_backend" context="{'group_by': 'backend_id'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="itv_zk_terminal_action" model="ir.actions.act_window">
+        <field name="name">Terminaux</field>
+        <field name="res_model">itv.zk.terminal</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Aucun terminal</p>
+            <p>Les terminaux sont créés par la synchronisation BioTime. Indiquez ensuite leur usage et leur sens.</p>
+        </field>
+    </record>
+</odoo>

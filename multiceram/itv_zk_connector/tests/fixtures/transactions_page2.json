@@ -1,0 +1,16 @@
+{
+  "count": 3,
+  "next": null,
+  "previous": "http://biotime-interne:8090/iclock/api/transactions/?page=1&page_size=2",
+  "msg": "",
+  "code": 0,
+  "data": [
+    {
+      "id": 1003, "emp_code": "999999", "punch_time": "2026-09-10 22:01:05", "punch_state": "0",
+      "verify_type": 15, "work_code": null, "terminal_sn": "NEWFIX00000003", "terminal_alias": "Nouveau terminal",
+      "area_alias": "Usine", "longitude": null, "latitude": null, "gps_location": "", "mobile": null,
+      "source": 1, "purpose": 1, "crc": null, "is_attendance": 1, "reserved": null,
+      "upload_time": "2026-09-10 22:01:09", "sync_status": 1, "sync_time": null, "emp": null, "terminal": 21
+    }
+  ]
+}

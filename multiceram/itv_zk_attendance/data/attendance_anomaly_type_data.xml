@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <record id="anomaly_type_presence_odd" model="itv.attendance.anomaly.type">
+            <field name="name">Présence impaire</field>
+            <field name="code">presence_odd</field>
+            <field name="sequence">10</field>
+            <field name="description">Nombre impair de pointages de présence : la journée n'a pas de couple entrée / sortie exploitable.</field>
+        </record>
+        <record id="anomaly_type_door_odd" model="itv.attendance.anomaly.type">
+            <field name="name">Porte impaire</field>
+            <field name="code">door_odd</field>
+            <field name="sequence">20</field>
+            <field name="description">Nombre impair de passages aux terminaux de porte (pause).</field>
+        </record>
+        <record id="anomaly_type_detected_present" model="itv.attendance.anomaly.type">
+            <field name="name">Détecté présent</field>
+            <field name="code">detected_present</field>
+            <field name="sequence">30</field>
+            <field name="description">Des pointages existent (porte, restaurant, magasin) sans aucun pointage de présence.</field>
+        </record>
+        <record id="anomaly_type_attendance_conflict" model="itv.attendance.anomaly.type">
+            <field name="name">Présence non reportée</field>
+            <field name="code">attendance_conflict</field>
+            <field name="sequence">40</field>
+            <field name="description">La journée chevauche une autre présence de l'employé : aucune ligne n'a pu être créée dans Présences.</field>
+        </record>
+    </data>
+</odoo>

@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Jour de repos (colonne JR de la page d'origine) : congé natif sans attribution ni validation. -->
+    <data noupdate="1">
+        <record id="leave_type_rest_day" model="hr.leave.type">
+            <field name="name">Jour de repos</field>
+            <field name="requires_allocation" eval="False"/>
+            <field name="leave_validation_type">no_validation</field>
+            <field name="request_unit">day</field>
+            <field name="time_type">leave</field>
+            <field name="allow_request_on_top" eval="False"/>
+        </record>
+    </data>
+</odoo>

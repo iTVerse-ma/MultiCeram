@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="ir_cron_itv_attendance_recompute" model="ir.cron">
+        <field name="name">Pointage : recalcul des journées</field>
+        <field name="model_id" ref="model_itv_attendance_dirty"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_recompute()</field>
+        <field name="interval_number">10</field>
+        <field name="interval_type">minutes</field>
+    </record>
+    <record id="ir_cron_itv_attendance_close_day" model="ir.cron">
+        <field name="name">Pointage : journée de la veille</field>
+        <field name="model_id" ref="model_itv_attendance_dirty"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_close_yesterday()</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="nextcall" eval="(DateTime.now() + relativedelta(days=1)).strftime('%Y-%m-%d 04:30:00')"/>
+    </record>
+</odoo>

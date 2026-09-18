@@ -1,0 +1,11 @@
+{
+  "count": 2,
+  "next": null,
+  "previous": null,
+  "msg": "",
+  "code": 0,
+  "data": [
+    {"id": 1, "dept_code": "1", "dept_name": "Production", "parent_dept": null, "parent_dept_name": null},
+    {"id": 2, "dept_code": "2", "dept_name": "Émaillage", "parent_dept": 1, "parent_dept_name": "Production"}
+  ]
+}

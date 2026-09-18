@@ -1,0 +1,40 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="ir_cron_itv_zk_transactions" model="ir.cron">
+        <field name="name">BioTime : import des pointages</field>
+        <field name="model_id" ref="model_itv_zk_backend"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_sync('transactions')</field>
+        <field name="interval_number">5</field>
+        <field name="interval_type">minutes</field>
+    </record>
+
+    <record id="ir_cron_itv_zk_terminals" model="ir.cron">
+        <field name="name">BioTime : terminaux et rattrapages</field>
+        <field name="model_id" ref="model_itv_zk_backend"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_sync('terminals')</field>
+        <field name="interval_number">15</field>
+        <field name="interval_type">minutes</field>
+    </record>
+
+    <record id="ir_cron_itv_zk_reconcile" model="ir.cron">
+        <field name="name">BioTime : réconciliation des pointages</field>
+        <field name="model_id" ref="model_itv_zk_backend"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_sync('reconcile')</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="nextcall" eval="(DateTime.now() + timedelta(days=1)).strftime('%Y-%m-%d 01:30:00')"/>
+    </record>
+
+    <record id="ir_cron_itv_zk_employees" model="ir.cron">
+        <field name="name">BioTime : employés et départements</field>
+        <field name="model_id" ref="model_itv_zk_backend"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_sync('employees')</field>
+        <field name="interval_number">1</field>
+        <field name="interval_type">days</field>
+        <field name="nextcall" eval="(DateTime.now() + timedelta(days=1)).strftime('%Y-%m-%d 01:00:00')"/>
+    </record>
+</odoo>

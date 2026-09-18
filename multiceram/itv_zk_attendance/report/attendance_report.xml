@@ -1,0 +1,150 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="paperformat_attendance_month" model="report.paperformat">
+        <field name="name">Pointage mensuel (A4 paysage)</field>
+        <field name="format">A4</field>
+        <field name="orientation">Landscape</field>
+        <field name="margin_top">25</field>
+        <field name="margin_bottom">12</field>
+        <field name="margin_left">7</field>
+        <field name="margin_right">7</field>
+        <field name="header_line" eval="False"/>
+        <field name="header_spacing">20</field>
+        <field name="dpi">90</field>
+    </record>
+
+    <record id="action_report_attendance_month" model="ir.actions.report">
+        <field name="name">Pointage mensuel</field>
+        <field name="model">itv.attendance.day</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">itv_zk_attendance.report_attendance_month</field>
+        <field name="report_file">itv_zk_attendance.report_attendance_month</field>
+        <field name="print_report_name">'Pointage mensuel - %s' % (object.employee_id.name or '')</field>
+        <field name="paperformat_id" ref="paperformat_attendance_month"/>
+        <field name="binding_model_id" ref="model_itv_attendance_day"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <record id="action_report_attendance_month_presence" model="ir.actions.report">
+        <field name="name">Pointage mensuel</field>
+        <field name="model">hr.attendance</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">itv_zk_attendance.report_attendance_month_presence</field>
+        <field name="report_file">itv_zk_attendance.report_attendance_month_presence</field>
+        <field name="print_report_name">'Pointage mensuel - %s' % (object.employee_id.name or '')</field>
+        <field name="paperformat_id" ref="paperformat_attendance_month"/>
+        <field name="binding_model_id" ref="hr_attendance.model_hr_attendance"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="report_attendance_month_hours">
+        <td class="text-end"><t t-if="value" t-out="value" t-options="{'widget': 'float_time'}"/></td>
+    </template>
+
+    <template id="report_attendance_month_page">
+        <t t-set="o" t-value="page['employee']"/>
+        <t t-set="company" t-value="o.company_id"/>
+        <t t-set="totals" t-value="page['totals']"/>
+        <t t-call="web.external_layout">
+            <div class="page" style="font-size: 10px;">
+                <h5 class="mb-1">Pointage mensuel — <t t-out="page['month']"/></h5>
+                <p class="mb-2">
+                    <strong t-out="o.name"/>
+                    <t t-if="o.barcode"> · Matricule <t t-out="o.barcode"/></t>
+                    <t t-if="o.department_id"> · <t t-out="o.department_id.name"/></t>
+                    <t t-if="o.itv_schedule_type"> · Horaire <span t-field="o.itv_schedule_type"/></t>
+                </p>
+                <table class="table table-sm table-bordered o_main_table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Jour</th>
+                            <th>Pointages</th>
+                            <th class="text-end">H.Prés</th>
+                            <th class="text-end">H.Nor</th>
+                            <th class="text-end">Pause</th>
+                            <th class="text-end">Abs.</th>
+                            <th class="text-end">HS</th>
+                            <th class="text-end">HS corr.</th>
+                            <th class="text-end">HS décl.</th>
+                            <th class="text-end">25 %</th>
+                            <th class="text-end">50 %</th>
+                            <th class="text-end">100 %</th>
+                            <th>Congé</th>
+                            <th>JF</th>
+                            <th>JR</th>
+                            <th>Anomalie</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr t-foreach="page['days']" t-as="day" t-att-class="'table-active' if day.weekday == '6' else None">
+                            <td><span t-field="day.date"/></td>
+                            <td><span t-field="day.weekday"/></td>
+                            <td>
+                                <t t-out="day.punch_summary"/>
+                                <span t-if="day.lg_error" class="text-danger"> <span t-field="day.lg_error"/></span>
+                            </td>
+                            <t t-call="itv_zk_attendance.report_attendance_month_hours"><t t-set="value" t-value="day.lg_heures"/></t>
+                            <t t-call="itv_zk_attendance.report_attendance_month_hours"><t t-set="value" t-value="day.lg_heures25"/></t>
+                            <t t-call="itv_zk_attendance.report_attendance_month_hours"><t t-set="value" t-value="day.lg_pause"/></t>
+                            <t t-call="itv_zk_attendance.report_attendance_month_hours"><t t-set="value" t-value="day.lg_abs25"/></t>
+                            <t t-call="itv_zk_attendance.report_attendance_month_hours"><t t-set="value" t-value="day.lg_hs"/></t>
+                            <t t-call="itv_zk_attendance.report_attendance_month_hours"><t t-set="value" t-value="day.lg_hs25"/></t>
+                            <t t-call="itv_zk_attendance.report_attendance_month_hours"><t t-set="value" t-value="day.lg_total_hs_declare"/></t>
+                            <t t-call="itv_zk_attendance.report_attendance_month_hours"><t t-set="value" t-value="round(day.lg_total_hs25 - day.lg_hs25_raw, 6)"/></t>
+                            <t t-call="itv_zk_attendance.report_attendance_month_hours"><t t-set="value" t-value="day.lg_hs50_column"/></t>
+                            <t t-call="itv_zk_attendance.report_attendance_month_hours"><t t-set="value" t-value="day.lg_total_hs100"/></t>
+                            <td><t t-if="day.has_leave">x</t></td>
+                            <td><t t-if="day.is_holiday">x</t></td>
+                            <td><t t-if="day.is_rest_day">x</t></td>
+                            <td>
+                                <t t-out="day.anomaly_label"/>
+                                <t t-if="day.anomaly_state in ('justified', 'ignored')"> (<span t-field="day.anomaly_state"/>)</t>
+                            </td>
+                        </tr>
+                    </tbody>
+                    <tfoot>
+                        <tr class="fw-bold">
+                            <td colspan="3">
+                                <t t-out="totals['days']"/> jours · présence <t t-out="totals['lg_worked_day']"/> · absence <t t-out="totals['lg_absent_day']"/>
+                            </td>
+                            <t t-call="itv_zk_attendance.report_attendance_month_hours"><t t-set="value" t-value="totals['lg_heures']"/></t>
+                            <t t-call="itv_zk_attendance.report_attendance_month_hours"><t t-set="value" t-value="totals['lg_heures25']"/></t>
+                            <t t-call="itv_zk_attendance.report_attendance_month_hours"><t t-set="value" t-value="totals['lg_pause']"/></t>
+                            <t t-call="itv_zk_attendance.report_attendance_month_hours"><t t-set="value" t-value="totals['lg_abs25']"/></t>
+                            <t t-call="itv_zk_attendance.report_attendance_month_hours"><t t-set="value" t-value="totals['lg_hs']"/></t>
+                            <t t-call="itv_zk_attendance.report_attendance_month_hours"><t t-set="value" t-value="totals['lg_hs25']"/></t>
+                            <t t-call="itv_zk_attendance.report_attendance_month_hours"><t t-set="value" t-value="totals['lg_total_hs_declare']"/></t>
+                            <t t-call="itv_zk_attendance.report_attendance_month_hours"><t t-set="value" t-value="totals['lg_total_hs25']"/></t>
+                            <t t-call="itv_zk_attendance.report_attendance_month_hours"><t t-set="value" t-value="totals['lg_total_hs50']"/></t>
+                            <t t-call="itv_zk_attendance.report_attendance_month_hours"><t t-set="value" t-value="totals['lg_total_hs100']"/></t>
+                            <td t-out="totals['leaves'] or ''"/>
+                            <td t-out="totals['holidays'] or ''"/>
+                            <td t-out="totals['rest_days'] or ''"/>
+                            <td/>
+                        </tr>
+                    </tfoot>
+                </table>
+                <p class="text-muted">
+                    Calcul selon les règles nabi_hr : arrivée arrondie à la demi-heure, départ arrondi (H.Nor), totaux 25 % / 50 % / 100 % comme le pied de page d'origine.
+                </p>
+            </div>
+        </t>
+    </template>
+
+    <template id="report_attendance_month">
+        <t t-call="web.html_container">
+            <t t-foreach="docs._report_pages()" t-as="page">
+                <t t-call="itv_zk_attendance.report_attendance_month_page"/>
+            </t>
+        </t>
+    </template>
+
+    <template id="report_attendance_month_presence">
+        <t t-call="web.html_container">
+            <t t-foreach="docs.itv_day_id._report_pages()" t-as="page">
+                <t t-call="itv_zk_attendance.report_attendance_month_page"/>
+            </t>
+        </t>
+    </template>
+</odoo>

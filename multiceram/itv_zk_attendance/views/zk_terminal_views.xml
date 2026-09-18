@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="itv_zk_terminal_view_list_itv_attendance" model="ir.ui.view">
+        <field name="name">itv.zk.terminal.list.itv.attendance</field>
+        <field name="model">itv.zk.terminal</field>
+        <field name="inherit_id" ref="itv_zk_connector.itv_zk_terminal_view_list"/>
+        <field name="arch" type="xml">
+            <field name="direction" position="after">
+                <field name="itv_legacy_presence" optional="show"/>
+            </field>
+        </field>
+    </record>
+</odoo>

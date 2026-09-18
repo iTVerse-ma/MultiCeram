@@ -1,0 +1,14 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_itv_zk_backend_officer,itv.zk.backend.officer,model_itv_zk_backend,hr_attendance.group_hr_attendance_officer,1,0,0,0
+access_itv_zk_backend_manager,itv.zk.backend.manager,model_itv_zk_backend,hr_attendance.group_hr_attendance_manager,1,1,1,1
+access_itv_zk_sync_state_officer,itv.zk.sync.state.officer,model_itv_zk_sync_state,hr_attendance.group_hr_attendance_officer,1,0,0,0
+access_itv_zk_sync_state_manager,itv.zk.sync.state.manager,model_itv_zk_sync_state,hr_attendance.group_hr_attendance_manager,1,1,1,1
+access_itv_zk_sync_log_officer,itv.zk.sync.log.officer,model_itv_zk_sync_log,hr_attendance.group_hr_attendance_officer,1,0,0,0
+access_itv_zk_sync_log_manager,itv.zk.sync.log.manager,model_itv_zk_sync_log,hr_attendance.group_hr_attendance_manager,1,1,1,1
+access_itv_zk_outbox_officer,itv.zk.outbox.officer,model_itv_zk_outbox,hr_attendance.group_hr_attendance_officer,1,0,0,0
+access_itv_zk_outbox_manager,itv.zk.outbox.manager,model_itv_zk_outbox,hr_attendance.group_hr_attendance_manager,1,1,1,1
+access_itv_zk_terminal_officer,itv.zk.terminal.officer,model_itv_zk_terminal,hr_attendance.group_hr_attendance_officer,1,0,0,0
+access_itv_zk_terminal_manager,itv.zk.terminal.manager,model_itv_zk_terminal,hr_attendance.group_hr_attendance_manager,1,1,1,1
+access_itv_zk_punch_officer,itv.zk.punch.officer,model_itv_zk_punch,hr_attendance.group_hr_attendance_officer,1,0,0,0
+access_itv_zk_punch_user,itv.zk.punch.user,model_itv_zk_punch,hr_attendance.group_hr_attendance_user,1,1,1,0
+access_itv_zk_punch_manager,itv.zk.punch.manager,model_itv_zk_punch,hr_attendance.group_hr_attendance_manager,1,1,1,1

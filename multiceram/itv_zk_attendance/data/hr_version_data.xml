@@ -1,0 +1,4 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <function model="hr.version" name="_itv_disable_native_overtime"/>
+</odoo>

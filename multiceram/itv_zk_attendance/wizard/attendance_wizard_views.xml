@@ -1,0 +1,50 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="itv_attendance_anomaly_wizard_view_form" model="ir.ui.view">
+        <field name="name">itv.attendance.anomaly.wizard.form</field>
+        <field name="model">itv.attendance.anomaly.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Traiter les anomalies">
+                <group>
+                    <field name="resolution" widget="radio"/>
+                    <field name="note" placeholder="ex. oubli de badge signalé par le chef d'équipe"/>
+                    <field name="day_ids" widget="many2many_tags" readonly="1"/>
+                </group>
+                <footer>
+                    <button name="action_apply" type="object" string="Appliquer" class="btn-primary"/>
+                    <button special="cancel" string="Annuler"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="itv_attendance_anomaly_wizard_action" model="ir.actions.act_window">
+        <field name="name">Traiter les anomalies</field>
+        <field name="res_model">itv.attendance.anomaly.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+
+    <record id="itv_attendance_punch_wizard_view_form" model="ir.ui.view">
+        <field name="name">itv.attendance.punch.wizard.form</field>
+        <field name="model">itv.attendance.punch.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Ajouter un pointage">
+                <div class="alert alert-info" role="alert">
+                    Le pointage compte tout de suite dans la journée ; il est aussi mis en file d'envoi vers BioTime,
+                    envoyé quand la connexion est active et hors lecture seule.
+                </div>
+                <group>
+                    <field name="day_id" readonly="1"/>
+                    <field name="punch_time"/>
+                    <field name="punch_state" widget="radio" options="{'horizontal': true}"/>
+                    <field name="reason" placeholder="ex. oubli de badge"/>
+                </group>
+                <footer>
+                    <button name="action_confirm" type="object" string="Ajouter" class="btn-primary"/>
+                    <button special="cancel" string="Annuler"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+</odoo>

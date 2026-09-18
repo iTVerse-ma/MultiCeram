@@ -1,0 +1,166 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="itv_overtime_line_view_list" model="ir.ui.view">
+        <field name="name">hr.attendance.overtime.line.list.itv</field>
+        <field name="model">hr.attendance.overtime.line</field>
+        <field name="arch" type="xml">
+            <list string="Heures supplémentaires" default_order="date desc, employee_id">
+                <header>
+                    <button name="action_itv_validate_1" type="object" string="Valider N1" class="btn-primary" groups="itv_zk_attendance.group_itv_overtime_validation_1"/>
+                    <button name="action_itv_validate_2" type="object" string="Valider N2" groups="itv_zk_attendance.group_itv_overtime_validation_2"/>
+                    <button name="action_itv_refuse" type="object" string="Refuser" groups="itv_zk_attendance.group_itv_overtime_validation_1"/>
+                    <button name="action_itv_reset" type="object" string="Remettre en validation"/>
+                </header>
+                <field name="date" readonly="itv_state != 'submitted'"/>
+                <field name="employee_id" widget="many2one_avatar_employee" readonly="itv_state != 'submitted'"/>
+                <field name="duration" widget="float_time" sum="Total" readonly="itv_state != 'submitted'"/>
+                <field name="itv_rate" required="1" readonly="itv_state != 'submitted'"/>
+                <field name="itv_state" widget="badge" readonly="1"
+                       decoration-warning="itv_state in ('submitted', 'validated_1')"
+                       decoration-success="itv_state == 'validated_2'" decoration-danger="itv_state == 'refused'"/>
+                <field name="itv_submitted_uid" widget="many2one_avatar_user" optional="hide"/>
+                <field name="itv_validated_1_uid" widget="many2one_avatar_user" optional="show"/>
+                <field name="itv_validated_1_date" optional="hide"/>
+                <field name="itv_validated_2_uid" widget="many2one_avatar_user" optional="show"/>
+                <field name="itv_validated_2_date" optional="hide"/>
+                <field name="itv_refused_uid" widget="many2one_avatar_user" optional="hide"/>
+                <button name="action_itv_validate_1" type="object" icon="fa-check" title="Valider N1 (toute la journée de cet employé)"
+                        invisible="itv_state != 'submitted'" groups="itv_zk_attendance.group_itv_overtime_validation_1"/>
+                <button name="action_itv_validate_2" type="object" icon="fa-check-circle" title="Valider N2 (toute la journée de cet employé)"
+                        invisible="itv_state != 'validated_1'" groups="itv_zk_attendance.group_itv_overtime_validation_2"/>
+                <button name="action_itv_refuse" type="object" icon="fa-times" title="Refuser (toute la journée de cet employé)"
+                        invisible="itv_state not in ('submitted', 'validated_1')" groups="itv_zk_attendance.group_itv_overtime_validation_1"/>
+                <button name="action_itv_reset" type="object" icon="fa-undo" title="Remettre en validation"
+                        invisible="itv_state not in ('validated_1', 'refused')"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="itv_overtime_line_view_form" model="ir.ui.view">
+        <field name="name">hr.attendance.overtime.line.form.itv</field>
+        <field name="model">hr.attendance.overtime.line</field>
+        <field name="arch" type="xml">
+            <form string="Heures supplémentaires">
+                <header>
+                    <button name="action_itv_validate_1" type="object" string="Valider N1" class="btn-primary"
+                            invisible="itv_state != 'submitted'" groups="itv_zk_attendance.group_itv_overtime_validation_1"/>
+                    <button name="action_itv_validate_2" type="object" string="Valider N2" class="btn-primary"
+                            invisible="itv_state != 'validated_1'" groups="itv_zk_attendance.group_itv_overtime_validation_2"/>
+                    <button name="action_itv_refuse" type="object" string="Refuser"
+                            invisible="itv_state not in ('submitted', 'validated_1')"
+                            groups="itv_zk_attendance.group_itv_overtime_validation_1"/>
+                    <button name="action_itv_reset" type="object" string="Remettre en validation"
+                            invisible="itv_state not in ('validated_1', 'refused')"/>
+                    <field name="itv_state" widget="statusbar" statusbar_visible="submitted,validated_1,validated_2"/>
+                </header>
+                <div class="alert alert-info mb-0" role="alert" invisible="itv_state in (False, 'submitted')">
+                    La validation porte sur la journée entière : toutes les lignes de cet employé à cette date suivent ce statut.
+                </div>
+                <sheet>
+                    <div class="oe_title">
+                        <label for="employee_id" string="Employé"/>
+                        <h1><field name="employee_id" widget="many2one_avatar_employee"
+                                   readonly="itv_state != 'submitted'"/></h1>
+                    </div>
+                    <group>
+                        <group string="Heures déclarées">
+                            <field name="date" readonly="itv_state != 'submitted'"/>
+                            <field name="duration" widget="float_time" readonly="itv_state != 'submitted'"/>
+                            <field name="itv_rate" readonly="itv_state != 'submitted'"/>
+                            <field name="amount_rate" readonly="1"/>
+                        </group>
+                        <group string="Rattachement">
+                            <field name="itv_day_id"/>
+                            <field name="time_start" readonly="itv_state != 'submitted'"/>
+                            <field name="time_stop" readonly="itv_state != 'submitted'"/>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                        </group>
+                        <group string="Demande">
+                            <field name="itv_submitted_uid" widget="many2one_avatar_user"/>
+                            <field name="itv_submitted_date"/>
+                        </group>
+                        <group string="Validations">
+                            <field name="itv_validated_1_uid" widget="many2one_avatar_user"
+                                   invisible="not itv_validated_1_uid"/>
+                            <field name="itv_validated_1_date" invisible="not itv_validated_1_date"/>
+                            <field name="itv_validated_2_uid" widget="many2one_avatar_user"
+                                   invisible="not itv_validated_2_uid"/>
+                            <field name="itv_validated_2_date" invisible="not itv_validated_2_date"/>
+                            <field name="itv_refused_uid" widget="many2one_avatar_user" invisible="not itv_refused_uid"/>
+                            <field name="itv_refused_date" invisible="not itv_refused_date"/>
+                        </group>
+                    </group>
+                </sheet>
+            </form>
+        </field>
+    </record>
+
+    <record id="itv_overtime_line_view_pivot" model="ir.ui.view">
+        <field name="name">hr.attendance.overtime.line.pivot.itv</field>
+        <field name="model">hr.attendance.overtime.line</field>
+        <field name="arch" type="xml">
+            <pivot string="Heures supplémentaires">
+                <field name="employee_id" type="row"/>
+                <field name="itv_rate" type="col"/>
+                <field name="duration" type="measure" widget="float_time"/>
+            </pivot>
+        </field>
+    </record>
+
+    <record id="itv_overtime_line_view_search" model="ir.ui.view">
+        <field name="name">hr.attendance.overtime.line.search.itv</field>
+        <field name="model">hr.attendance.overtime.line</field>
+        <field name="arch" type="xml">
+            <search string="Heures supplémentaires">
+                <field name="employee_id"/>
+                <filter string="En cours de validation N1" name="submitted" domain="[('itv_state', '=', 'submitted')]"/>
+                <filter string="À valider N2" name="validated_1" domain="[('itv_state', '=', 'validated_1')]"/>
+                <filter string="Validées" name="validated_2" domain="[('itv_state', '=', 'validated_2')]"/>
+                <filter string="Refusées" name="refused" domain="[('itv_state', '=', 'refused')]"/>
+                <separator/>
+                <filter string="Date" name="date" date="date"/>
+                <group>
+                    <filter string="Statut" name="group_state" context="{'group_by': 'itv_state'}"/>
+                    <filter string="Employé" name="group_employee" context="{'group_by': 'employee_id'}"/>
+                    <filter string="Taux" name="group_rate" context="{'group_by': 'itv_rate'}"/>
+                    <filter string="Mois" name="group_month" context="{'group_by': 'date:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="itv_overtime_line_action" model="ir.actions.act_window">
+        <field name="name">Heures supplémentaires</field>
+        <field name="res_model">hr.attendance.overtime.line</field>
+        <field name="view_mode">list,form,pivot</field>
+        <field name="view_id" eval="False"/>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'list', 'view_id': ref('itv_overtime_line_view_list')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('itv_overtime_line_view_form')}),
+            (0, 0, {'view_mode': 'pivot', 'view_id': ref('itv_overtime_line_view_pivot')})]"/>
+        <field name="search_view_id" ref="itv_overtime_line_view_search"/>
+        <field name="domain">[('itv_state', '!=', False)]</field>
+        <field name="context">{'default_itv_state': 'submitted', 'default_itv_rate': '25', 'search_default_group_state': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Aucune heure supplémentaire en circuit</p>
+            <p>Proposez les heures supplémentaires depuis Présences : elles arrivent ici en attente de validation N1, puis N2.</p>
+        </field>
+    </record>
+
+    <record id="itv_overtime_line_action_validated" model="ir.actions.act_window">
+        <field name="name">Heures supplémentaires validées</field>
+        <field name="res_model">hr.attendance.overtime.line</field>
+        <field name="view_mode">pivot,list,form</field>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'pivot', 'view_id': ref('itv_overtime_line_view_pivot')}),
+            (0, 0, {'view_mode': 'list', 'view_id': ref('itv_overtime_line_view_list')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('itv_overtime_line_view_form')})]"/>
+        <field name="search_view_id" ref="itv_overtime_line_view_search"/>
+        <field name="domain">[('itv_state', '!=', False)]</field>
+        <field name="context">{'search_default_validated_2': 1, 'pivot_row_groupby': ['employee_id', 'date:month'], 'pivot_column_groupby': ['itv_rate']}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Aucune heure supplémentaire validée</p>
+            <p>Heures validées au niveau 2, par employé, mois et taux : téléchargez le tableau croisé pour la paie.</p>
+        </field>
+    </record>
+</odoo>
