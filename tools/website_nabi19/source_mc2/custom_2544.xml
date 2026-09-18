@@ -1,0 +1,5 @@
+<data inherit_id="website.snippets">
+                    <xpath expr="//snippets[@id='snippet_custom']" position="inside">
+                        <t t-snippet="website.s_newsletter_subscribe_popup_3ee0312367df46abb39f6ea49b851d2d" t-thumbnail="oe-thumbnail"/>
+                    </xpath>
+                </data>

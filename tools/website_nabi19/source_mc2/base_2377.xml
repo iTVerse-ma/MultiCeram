@@ -1,0 +1,50 @@
+<t t-name="base.portal_attendance">
+  <t t-call="portal.portal_layout">
+    <div class="container py-4">
+      <h2 class="text-center mb-4">Pointages et corrections</h2>
+
+      <div class="table-responsive">
+        <table class="table table-bordered text-center">
+          <thead class="table-light">
+            <tr>
+              <th>Employé</th>
+              <t t-foreach="days" t-as="day">
+                <th><t t-esc="day.strftime('%a %d/%m')"/></th>
+              </t>
+            </tr>
+          </thead>
+          <tbody>
+            <t t-foreach="employees" t-as="emp">
+              <tr>
+                <td class="fw-bold"><t t-esc="emp.name"/></td>
+                <t t-foreach="days" t-as="day">
+                  <td>
+                    <t t-set="day_punches" t-value="punches.get(emp.id, {}).get(day, [])"/>
+                    <div>
+                      <t t-foreach="day_punches" t-as="p">
+                        <div class="small border rounded mb-1 p-1">
+                          <t t-esc="p and p.check_in and p.check_in.strftime('%H:%M')"/> - <t t-esc="p and p.check_out and p.check_out.strftime('%H:%M')"/>
+                        </div>
+                      </t>
+                    </div>
+                    <!-- actions -->
+                    <form method="post" action="/my/attendance/action">
+                      <input type="hidden" name="employee_id" t-att-value="emp.id"/>
+                      <input type="hidden" name="day" t-att-value="day"/>
+                      <div class="d-flex flex-wrap justify-content-center gap-1">
+                        <button name="action" value="manual" class="btn btn-sm btn-outline-primary">Manuel</button>
+                        <button name="action" value="delete_repeated" class="btn btn-sm btn-outline-danger">Suppr doublon</button>
+                        <button name="action" value="we" class="btn btn-sm btn-outline-success">WE</button>
+                        <button name="action" value="holiday" class="btn btn-sm btn-outline-warning">Férié</button>
+                      </div>
+                    </form>
+                  </td>
+                </t>
+              </tr>
+            </t>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </t>
+</t>

@@ -1,0 +1,38 @@
+<data inherit_id="website.layout" name="Call-to-Action" active="False">
+    <xpath expr="//div[@id='footer']" position="replace">
+        <div id="footer" class="oe_structure oe_structure_solo" t-ignore="true" t-if="not no_footer">
+            <section class="s_call_to_action pt64 pb64" data-name="Appel à l'action">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-lg-9">
+                            <h3>Plus de 50.000 entreprises utilisent Odoo pour développer leurs activités.</h3>
+                            <p class="lead">Rejoignez-nous et passez à la vitesse supérieure.</p>
+                        </div>
+                        <div class="col-lg-3 o_colored_level">
+                            <a class="btn btn-primary mb-2" href="#Toujours-le-premier.2">Bouton</a> <a href="/contactus" class="btn btn-primary btn-lg btn-block mb-2">Bouton de démarrage</a>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <section class="s_text_block" data-snippet="s_text_block" data-name="Text">
+                <div class="container s_allow_columns">
+                    <div class="s_hr pt16 pb16" data-name="Séparateur">
+                        <hr class="w-100 mx-auto" style="border-color: var(--600);"/>
+                    </div>
+                </div>
+            </section>
+            <section class="s_text_block" data-snippet="s_text_block" data-name="Text">
+                <div class="container">
+                    <div class="row">
+                        <div class="col-lg-9">
+                            <p><i class="fa fa-1x fa-fw fa-map-marker me-2"/>250 Executive Park Blvd, Suite 3400 • San Francisco CA 94134 • États-Unis</p>
+                        </div>
+                        <div class="col-lg-3">
+                            <p><i class="fa fa-1x fa-fw fa-envelope me-2"/><a href="mailto:info@yourcompany.example.com">info@yourcompany.example.com</a></p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </div>
+    </xpath>
+</data>

@@ -1,0 +1,38 @@
+<div class="s_popup o_newsletter_popup o_snippet_invisible o_draggable s_custom_snippet" data-vcss="001" data-snippet="s_newsletter_subscribe_popup" id="sPopup1758649012505">
+        <div class="modal fade s_popup_middle o_newsletter_modal modal_shown show" style="background-color: var(--black-50) !important; display: block;" data-show-after="5000" data-display="onClick" data-consents-duration="7" data-bs-focus="false" data-bs-backdrop="false" tabindex="-1" id="Toujours-le-premier.2" aria-modal="true" role="dialog">
+            <div class="modal-dialog d-flex">
+                <div class="modal-content oe_structure"><section class="s_text_block pt88 pb64 o_colored_level oe_img_bg o_bg_img_center o_bg_img_origin_border_box" data-snippet="s_text_block" data-name="Text" style="background-position: 0px 100%; background-image: url(&quot;/web/image/website.s_cover_default_image&quot;) !important;">
+                        <div class="container s_allow_columns">
+                            <div class="row">
+                                <div class="col-lg-12 bg-black-50 o_colored_level o_draggable">
+                                    <h2 style="text-align: center;">Toujours le <b class="o_default_snippet_text">premier</b>.</h2>
+                                    <p style="text-align: center;" class="o_default_snippet_text">Soyez le premier à découvrir toutes les dernières nouvelles, <br/>produits et tendances.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                    <div class="s_popup_close js_close_popup o_we_no_overlay o_not_editable o_default_snippet_text" aria-label="Fermer" contenteditable="false">×</div>
+                    
+                    <section class="s_text_block o_colored_level" data-snippet="s_text_block" data-name="Text">
+                        <div class="container">
+                            <div class="row s_nb_column_fixed g-0">
+                                <div class="col-lg-8 offset-lg-2 pt32 pb32 o_colored_level">
+    <div class="s_newsletter_subscribe_form s_newsletter_list js_subscribe" data-vxml="001" data-list-id="1" data-name="Newsletter Form" data-snippet="s_newsletter_subscribe_form">
+        <div class="js_subscribed_wrap d-none">
+            <p class="h4-fs text-center text-success o_default_snippet_text"><i class="fa fa-check-circle-o" role="img" contenteditable="false">​</i> Merci pour votre inscription !</p>
+        </div>
+        <div class="js_subscribe_wrap">
+            <div class="input-group">
+                <input type="email" name="email" class="js_subscribe_value form-control" placeholder="johnsmith@example.com"/>
+                <a role="button" href="#" class="btn btn-primary js_subscribe_btn o_submit o_default_snippet_text">S'inscrire</a>
+            </div>
+        </div>
+    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+                </div>
+            </div>
+        </div>
+    </div>

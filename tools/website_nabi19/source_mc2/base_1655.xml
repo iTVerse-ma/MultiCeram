@@ -1,0 +1,5 @@
+<data inherit_id="website.navbar_nav" name="Navbar Links Style" active="False">
+    <xpath expr="//ul[contains(@t-attf-class, 'top_menu')]" position="attributes">
+        <attribute name="t-attf-class" add="nav-pills" separator=" "/>
+    </xpath>
+</data>

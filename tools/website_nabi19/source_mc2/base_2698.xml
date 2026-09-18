@@ -1,0 +1,40 @@
+<t name="Portal Layout" t-name="portal.portal_layout">
+        <t t-call="portal.frontend_layout">
+            <t t-set="is_portal" t-value="True"/>
+
+            <div t-if="not no_breadcrumbs and not my_details and not breadcrumbs_searchbar" class="o_portal container mt-3">
+                <div class="d-flex justify-content-between align-items-center flex-wrap">
+                    <t t-call="portal.portal_breadcrumbs"/>
+                    <t t-if="prev_record or next_record" t-call="portal.record_pager"/>
+                </div>
+            </div>
+            <div id="wrap" class="o_portal_wrap">
+                <div class="container pt-3 pb-5">
+                    <t t-if="my_details">
+                        <div class="wrapper col-12 d-flex flex-wrap justify-content-between align-items-center">
+                            <h3 class="my-3">My account</h3>
+                            <button class="btn py-0 d-flex align-items-center gap-2 d-lg-none ms-auto" data-bs-toggle="offcanvas" data-bs-target="#accountOffCanvas">
+                                <img class="o_avatar rounded" t-att-src="image_data_uri(user_id.partner_id.avatar_1024)" alt="Contact"/>
+                            </button>
+                        </div>
+                        <div class="row justify-content-between">
+                            <div t-attf-class="o_portal_content col-12 col-lg-8 mb-5">
+                                <t t-out="0"/>
+                            </div>
+                            <div class="d-none d-lg-flex justify-content-end col-lg-4">
+                                <t t-call="portal.side_content"/>
+                            </div>
+                            <div class="offcanvas offcanvas-start d-lg-none" id="accountOffCanvas">
+                                <t t-call="portal.side_content">
+                                    <t t-set="isOffcanvas" t-value="true"/>
+                                </t>
+                            </div>
+                        </div>
+                    </t>
+                    <t t-else="">
+                        <t t-out="0"/>
+                    </t>
+                </div>
+            </div>
+        </t>
+    </t>
