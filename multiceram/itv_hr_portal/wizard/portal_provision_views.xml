@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="itv_hr_portal_provision_view_form" model="ir.ui.view">
+        <field name="name">itv.hr.portal.provision.form</field>
+        <field name="model">itv.hr.portal.provision</field>
+        <field name="arch" type="xml">
+            <form string="Créer les comptes portail">
+                <div invisible="user_ids">
+                    <p>
+                        Un compte <strong>portail</strong> est créé pour chaque employé sélectionné qui n'en a pas encore.
+                        L'identifiant est le matricule ; aucun mot de passe n'est posé : l'employé choisit le sien
+                        à partir du lien d'activation à imprimer.
+                    </p>
+                    <group>
+                        <field name="eligible_count" readonly="1"/>
+                        <field name="skipped_user_count" readonly="1"
+                               help="Employés déjà reliés à un utilisateur : ils gardent leur accès actuel."/>
+                        <field name="skipped_badge_count" readonly="1"
+                               help="Sans matricule : renseignez le Numéro RFID/Badge avant de créer le compte."/>
+                    </group>
+                    <field name="employee_ids" widget="many2many_tags" options="{'no_create': True}"/>
+                </div>
+                <div invisible="not user_ids">
+                    <p><strong>Comptes créés.</strong> Imprimez les courriers d'activation et remettez-les aux employés.</p>
+                    <field name="user_ids" readonly="1">
+                        <list>
+                            <field name="login" string="Matricule"/>
+                            <field name="name"/>
+                        </list>
+                    </field>
+                </div>
+                <footer>
+                    <button name="action_create_accounts" type="object" string="Créer les comptes"
+                            class="btn-primary" invisible="user_ids"/>
+                    <button name="action_print_letters" type="object" string="Imprimer les courriers"
+                            class="btn-primary" invisible="not user_ids"/>
+                    <button string="Fermer" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="itv_hr_portal_provision_action" model="ir.actions.act_window">
+        <field name="name">Créer les comptes portail</field>
+        <field name="res_model">itv.hr.portal.provision</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+        <field name="binding_model_id" ref="hr.model_hr_employee"/>
+        <field name="binding_view_types">list</field>
+        <field name="group_ids" eval="[(4, ref('hr.group_hr_manager'))]"/>
+    </record>
+</odoo>

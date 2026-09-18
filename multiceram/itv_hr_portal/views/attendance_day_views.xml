@@ -1,0 +1,194 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Anomalies (liste des présences) : envoi à l'employé, explication reçue, décision. -->
+    <record id="itv_attendance_view_list_portal" model="ir.ui.view">
+        <field name="name">hr.attendance.list.itv.portail</field>
+        <field name="model">hr.attendance</field>
+        <field name="inherit_id" ref="itv_zk_attendance.itv_attendance_view_list"/>
+        <field name="arch" type="xml">
+            <!-- Les heures natives portent déjà le premier et le dernier pointage : on les nomme ainsi. -->
+            <xpath expr="//field[@name='check_in']" position="attributes">
+                <attribute name="string">Premier pointage</attribute>
+                <attribute name="optional">show</attribute>
+            </xpath>
+            <xpath expr="//field[@name='check_out']" position="attributes">
+                <attribute name="string">Dernier pointage</attribute>
+                <attribute name="optional">show</attribute>
+            </xpath>
+
+            <!-- « Jour » et « Jour de la semaine » affichaient la même chose : on garde la sélection
+                 (groupable et filtrable) sous le libellé court. -->
+            <xpath expr="//field[@name='itv_day_label']" position="replace"/>
+            <xpath expr="//field[@name='itv_weekday']" position="attributes">
+                <attribute name="string">Jour</attribute>
+                <attribute name="optional">show</attribute>
+            </xpath>
+
+            <!-- Colonnes maison retirées : doublons des champs natifs ou du résumé « Pointages ». -->
+            <xpath expr="//field[@name='itv_first_punch']" position="replace"/>
+            <xpath expr="//field[@name='itv_last_punch']" position="replace"/>
+            <xpath expr="//field[@name='itv_punch_count']" position="replace"/>
+            <xpath expr="//field[@name='itv_anomaly_state']" position="replace"/>
+
+            <!-- Chiffres natifs d'Odoo à la place de leurs équivalents maison : on réutilise les colonnes
+                 déjà présentes (elles étaient masquées et suffixées « (Odoo) »), sans en ajouter de nouvelles. -->
+            <xpath expr="//field[@name='worked_hours']" position="attributes">
+                <attribute name="string">Temps de travail</attribute>
+                <attribute name="optional">show</attribute>
+            </xpath>
+            <xpath expr="//field[@name='overtime_hours']" position="attributes">
+                <attribute name="string">HS effectuées</attribute>
+                <attribute name="optional">show</attribute>
+            </xpath>
+            <xpath expr="//field[@name='itv_heures']" position="after">
+                <xpath expr="//field[@name='worked_hours']" position="move"/>
+            </xpath>
+            <xpath expr="//field[@name='itv_heures']" position="replace"/>
+            <xpath expr="//field[@name='itv_hs']" position="after">
+                <xpath expr="//field[@name='overtime_hours']" position="move"/>
+            </xpath>
+            <xpath expr="//field[@name='itv_hs']" position="replace"/>
+            <xpath expr="//field[@name='itv_overtime_state']" position="attributes">
+                <attribute name="string">Validation HS</attribute>
+            </xpath>
+
+            <!-- Type d'anomalie visible : les RH voient tout de suite de quoi il s'agit. -->
+            <xpath expr="//field[@name='itv_anomaly_label']" position="attributes">
+                <attribute name="optional">show</attribute>
+            </xpath>
+            <!-- Ordre demandé : Traitement, Motif, Message à l'employé, Explication de l'employé. -->
+            <xpath expr="//field[@name='itv_anomaly_note']" position="after">
+                <field name="itv_anomaly_flow" string="Traitement" widget="badge" optional="show"
+                       decoration-warning="itv_anomaly_flow == 'open'" decoration-info="itv_anomaly_flow == 'sent'"
+                       decoration-primary="itv_anomaly_flow == 'submitted'" decoration-success="itv_anomaly_flow == 'justified'"
+                       decoration-muted="itv_anomaly_flow == 'ignored'"/>
+                <field name="itv_portal_message" string="Message à l'employé" optional="show"/>
+                <field name="itv_portal_reason" string="Explication de l'employé" optional="show"/>
+                <field name="itv_portal_date" string="Expliquée le" optional="hide"/>
+            </xpath>
+            <xpath expr="//field[@name='itv_anomaly_note']" position="attributes">
+                <attribute name="optional">show</attribute>
+            </xpath>
+            <xpath expr="//field[@name='itv_anomaly_flow']" position="after">
+                <xpath expr="//field[@name='itv_anomaly_note']" position="move"/>
+            </xpath>
+
+            <!-- Congé / JF / JR après le bloc anomalie. -->
+            <xpath expr="//field[@name='itv_portal_date']" position="after">
+                <xpath expr="//field[@name='itv_has_leave']" position="move"/>
+                <xpath expr="//field[@name='itv_is_holiday']" position="move"/>
+                <xpath expr="//field[@name='itv_is_rest_day']" position="move"/>
+            </xpath>
+
+            <xpath expr="//button[@name='action_itv_open_punches']" position="before">
+                <button name="action_itv_portal_send" type="object" icon="fa-paper-plane"
+                        title="Envoyer l'anomalie à l'employé"
+                        invisible="itv_anomaly_flow != 'open'"/>
+                <button name="action_itv_anomaly_overtime" type="object" icon="fa-clock-o"
+                        title="Passer en heures supplémentaires"
+                        invisible="itv_anomaly_flow not in ['open', 'sent', 'submitted']"/>
+                <button name="action_itv_portal_accept" type="object" icon="fa-check"
+                        title="Accepter l'explication" invisible="itv_anomaly_flow != 'submitted'"/>
+                <button name="action_itv_portal_refuse_back" type="object" icon="fa-reply"
+                        title="Refuser et redemander une explication" invisible="itv_anomaly_flow != 'submitted'"/>
+                <button name="action_itv_portal_refuse_close" type="object" icon="fa-times"
+                        title="Refuser et clore" invisible="itv_anomaly_flow != 'submitted'"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Fiche de présence : le circuit avec l'employé, comme dans la liste. -->
+    <record id="itv_attendance_view_form_portal" model="ir.ui.view">
+        <field name="name">hr.attendance.form.itv.portail</field>
+        <field name="model">hr.attendance</field>
+        <field name="inherit_id" ref="itv_zk_attendance.itv_attendance_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="action_itv_portal_send" type="object" string="Envoyer à l'employé" class="btn-primary"
+                        invisible="itv_anomaly_flow != 'open'"/>
+                <button name="action_itv_anomaly_overtime" type="object" string="Passer en heures supplémentaires"
+                        invisible="itv_anomaly_flow not in ('open', 'sent', 'submitted')"/>
+                <button name="action_itv_portal_accept" type="object" string="Accepter l'explication" class="btn-primary"
+                        invisible="itv_anomaly_flow != 'submitted'"/>
+                <button name="action_itv_portal_refuse_back" type="object" string="Redemander une explication"
+                        invisible="itv_anomaly_flow != 'submitted'"/>
+                <button name="action_itv_portal_refuse_close" type="object" string="Refuser et clore"
+                        invisible="itv_anomaly_flow != 'submitted'"/>
+            </xpath>
+
+            <xpath expr="//group[@name='itv_anomaly']" position="attributes">
+                <attribute name="string">Anomalie et traitement</attribute>
+            </xpath>
+            <xpath expr="//field[@name='itv_anomaly_state']" position="before">
+                <field name="itv_anomaly_flow" string="Traitement" widget="badge" readonly="1"
+                       decoration-warning="itv_anomaly_flow == 'open'" decoration-info="itv_anomaly_flow == 'sent'"
+                       decoration-primary="itv_anomaly_flow == 'submitted'"
+                       decoration-success="itv_anomaly_flow == 'justified'"
+                       decoration-muted="itv_anomaly_flow == 'ignored'"/>
+            </xpath>
+            <xpath expr="//field[@name='itv_anomaly_state']" position="attributes">
+                <attribute name="invisible">1</attribute>
+            </xpath>
+            <xpath expr="//group[@name='itv_anomaly']" position="inside">
+                <field name="itv_portal_message" string="Message à l'employé" readonly="1"
+                       invisible="not itv_portal_message"/>
+                <field name="itv_portal_sent_date" string="Envoyée le" readonly="1"
+                       invisible="not itv_portal_sent_date"/>
+                <field name="itv_portal_reason" string="Explication de l'employé" readonly="1"
+                       invisible="not itv_portal_reason"/>
+                <field name="itv_portal_date" string="Expliquée le" readonly="1" invisible="not itv_portal_date"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Recherche : suivre ce qui attend l'employé et ce qui attend les RH. -->
+    <record id="itv_attendance_view_search_portal" model="ir.ui.view">
+        <field name="name">hr.attendance.search.itv.portail</field>
+        <field name="model">hr.attendance</field>
+        <field name="inherit_id" ref="itv_zk_attendance.itv_attendance_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//filter[@name='anomaly_ignored']" position="after">
+                <filter string="Envoyées à l'employé" name="portal_sent" domain="[('itv_anomaly_flow', '=', 'sent')]"/>
+                <filter string="Expliquées, à décider" name="portal_submitted" domain="[('itv_anomaly_flow', '=', 'submitted')]"/>
+                <separator/>
+                <filter string="Traitement" name="group_itv_flow" context="{'group_by': 'itv_anomaly_flow'}"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Liste des journées (calcul historique) : mêmes informations. -->
+    <record id="itv_attendance_day_view_list_anomalies_portal" model="ir.ui.view">
+        <field name="name">itv.attendance.day.list.anomalies.portail</field>
+        <field name="model">itv.attendance.day</field>
+        <field name="inherit_id" ref="itv_zk_attendance.itv_attendance_day_view_list_anomalies"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='anomaly_state']" position="attributes">
+                <attribute name="optional">hide</attribute>
+            </xpath>
+            <xpath expr="//field[@name='anomaly_label']" position="attributes">
+                <attribute name="optional">show</attribute>
+            </xpath>
+            <xpath expr="//list" position="inside">
+                <field name="itv_anomaly_flow" string="Traitement" widget="badge" optional="show"
+                       decoration-warning="itv_anomaly_flow == 'open'" decoration-info="itv_anomaly_flow == 'sent'"
+                       decoration-primary="itv_anomaly_flow == 'submitted'" decoration-success="itv_anomaly_flow == 'justified'"
+                       decoration-muted="itv_anomaly_flow == 'ignored'"/>
+                <field name="itv_portal_state" optional="hide"/>
+                <field name="itv_portal_reason" optional="show"/>
+                <field name="itv_portal_date" optional="hide"/>
+                <button name="action_itv_portal_send" type="object" icon="fa-paper-plane"
+                        title="Envoyer l'anomalie à l'employé"
+                        invisible="itv_anomaly_flow != 'open'"/>
+                <button name="action_itv_anomaly_overtime" type="object" icon="fa-clock-o"
+                        title="Passer en heures supplémentaires"
+                        invisible="itv_anomaly_flow not in ['open', 'sent', 'submitted']"/>
+                <button name="action_itv_portal_accept" type="object" icon="fa-check"
+                        title="Accepter l'explication" invisible="itv_anomaly_flow != 'submitted'"/>
+                <button name="action_itv_portal_refuse_back" type="object" icon="fa-reply"
+                        title="Refuser et redemander une explication" invisible="itv_anomaly_flow != 'submitted'"/>
+                <button name="action_itv_portal_refuse_close" type="object" icon="fa-times"
+                        title="Refuser et clore" invisible="itv_anomaly_flow != 'submitted'"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

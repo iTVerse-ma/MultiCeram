@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="action_report_portal_activation" model="ir.actions.report">
+        <field name="name">Courrier d'activation du portail</field>
+        <field name="model">res.users</field>
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">itv_hr_portal.report_portal_activation</field>
+        <field name="report_file">itv_hr_portal.report_portal_activation</field>
+        <field name="print_report_name">'Activation portail - %s' % (object.login)</field>
+        <field name="binding_model_id" ref="base.model_res_users"/>
+        <field name="binding_type">report</field>
+    </record>
+
+    <template id="report_portal_activation">
+        <t t-call="web.html_container">
+            <t t-foreach="docs" t-as="user">
+                <t t-set="base_url" t-value="user.get_base_url()"/>
+                <t t-set="signup_url" t-value="user.itv_signup_url"/>
+                <t t-call="web.external_layout">
+                    <div class="page">
+                        <h2>Votre espace employé</h2>
+                        <p>
+                            Bonjour <strong t-out="user.name"/>,<br/>
+                            un accès personnel vous est ouvert pour consulter vos pointages, demander vos congés
+                            et suivre vos heures supplémentaires.
+                        </p>
+
+                        <table class="table table-sm w-75 my-4">
+                            <tr>
+                                <td class="w-25"><strong>Adresse</strong></td>
+                                <td t-out="base_url"/>
+                            </tr>
+                            <tr>
+                                <td><strong>Identifiant</strong></td>
+                                <td><strong t-out="user.login"/> (votre matricule)</td>
+                            </tr>
+                            <tr>
+                                <td><strong>Mot de passe</strong></td>
+                                <td>à choisir vous-même lors de la première connexion</td>
+                            </tr>
+                        </table>
+
+                        <p>Scannez ce code, ou saisissez l'adresse ci-dessous, pour choisir votre mot de passe :</p>
+                        <div t-if="signup_url">
+                            <img t-if="user.itv_signup_qr" t-att-src="image_data_uri(user.itv_signup_qr)"
+                                 style="width:150px;height:150px;" alt="QR d'activation"/>
+                            <p class="small text-muted" style="word-break: break-all;" t-out="signup_url"/>
+                            <p class="small">Ce lien est personnel. S'il ne fonctionne plus, demandez-en un nouveau au service du personnel.</p>
+                        </div>
+                        <p t-else="" class="text-danger">
+                            Lien d'activation non disponible : contactez le service du personnel.
+                        </p>
+                    </div>
+                </t>
+            </t>
+        </t>
+    </template>
+</odoo>

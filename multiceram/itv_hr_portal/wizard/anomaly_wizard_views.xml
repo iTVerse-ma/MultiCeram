@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Trois auteurs, trois champs : message du responsable, explication de l'employé, motif de la décision. -->
+    <record id="itv_attendance_anomaly_wizard_view_form_portal" model="ir.ui.view">
+        <field name="name">itv.attendance.anomaly.wizard.form.portail</field>
+        <field name="model">itv.attendance.anomaly.wizard</field>
+        <field name="inherit_id" ref="itv_zk_attendance.itv_attendance_anomaly_wizard_view_form"/>
+        <field name="arch" type="xml">
+            <field name="note" position="before">
+                <field name="overtime_hours" widget="float_time" invisible="resolution != 'overtime'"
+                       required="resolution == 'overtime'"/>
+                <field name="overtime_rate" invisible="resolution != 'overtime'"
+                       required="resolution == 'overtime'"/>
+                <field name="message" invisible="resolution != 'sent'" required="0"
+                       placeholder="Ex. merci d'expliquer l'absence de pointage de sortie"/>
+            </field>
+            <field name="note" position="attributes">
+                <attribute name="string">Motif de la décision</attribute>
+                <attribute name="invisible">resolution == 'sent'</attribute>
+                <attribute name="placeholder">Ex. heures supplémentaires du samedi</attribute>
+                <attribute name="placeholder">Ex. justifiée par le responsable d'atelier</attribute>
+            </field>
+            <!-- Les journées traitées, avec ce que l'employé a répondu : de quoi trancher sans quitter l'écran. -->
+            <field name="day_ids" position="replace">
+                <field name="day_ids" readonly="1" nolabel="1" colspan="2">
+                    <list string="Journées" create="0" delete="0">
+                        <field name="date"/>
+                        <field name="employee_id"/>
+                        <field name="punch_summary" string="Pointages"/>
+                        <field name="anomaly_label" string="Anomalie"/>
+                        <field name="itv_portal_state" string="Portail" widget="badge"
+                               decoration-info="itv_portal_state == 'sent'" decoration-warning="itv_portal_state == 'submitted'"
+                               decoration-success="itv_portal_state == 'accepted'" decoration-danger="itv_portal_state == 'refused'"/>
+                        <field name="itv_portal_message" string="Message envoyé"/>
+                        <field name="itv_portal_reason" string="Explication de l'employé"/>
+                    </list>
+                </field>
+            </field>
+        </field>
+    </record>
+</odoo>
