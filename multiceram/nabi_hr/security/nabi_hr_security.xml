@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Groupes créés à la main dans mc2 (ids 68 et 66). -->
+    <record id="group_validation_hs_1" model="res.groups">
+        <field name="name">Validation HS 1</field>
+    </record>
+    <record id="group_validation_hs_2" model="res.groups">
+        <field name="name">Validation HS 2</field>
+    </record>
+</odoo>

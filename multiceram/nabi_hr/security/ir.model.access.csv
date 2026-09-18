@@ -1,0 +1,10 @@
+id,name,model_id:id,group_id:id,perm_read,perm_write,perm_create,perm_unlink
+access_nabi_hr_visiteur_user,Visiteur User,model_visitor,base.group_user,1,1,1,1
+access_zk_transaction_all,zk.transaction (mc2 : ss),model_zk_transaction,,1,1,1,1
+access_zk_terminals_all,zk.terminals (mc2 : ss),model_zk_terminals,,1,1,1,1
+access_zk_connector_all,zk.connector (mc2 : test),model_zk_connector,,1,1,1,1
+access_zk_cvsecurity_sync_admin,zk.cvsecurity.sync (mc2 : all),model_zk_cvsecurity_sync,base.group_system,1,1,1,1
+access_hr_attendance_manual_user,hr.attendance.manual,model_hr_attendance_manual,base.group_user,1,1,1,1
+access_x_jour_repos_all,x_jour_repos (mc2 : all),model_x_jour_repos,,1,1,1,0
+access_x_jour_repos_validation_1,x_jour_repos (mc2 : VAlidation 1),model_x_jour_repos,group_validation_hs_1,1,1,1,0
+access_x_jour_repos_validation_2,x_jour_repos (mc2 : Validation 2),model_x_jour_repos,group_validation_hs_2,1,1,1,0

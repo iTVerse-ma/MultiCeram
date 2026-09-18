@@ -1,0 +1,74 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Écrans back-office créés à la main dans mc2 (vues 2551 et 2555, actions 529, 530 et 569, menus « ZK »), repris dans le code. -->
+    <record id="zk_terminals_view_list" model="ir.ui.view">
+        <field name="name">zk.terminals.list</field>
+        <field name="model">zk.terminals</field>
+        <field name="arch" type="xml">
+            <list create="1" multi_edit="1">
+                <header>
+                    <button name="sync_terminals" type="object" string="Sync Terminals" display="always"/>
+                </header>
+                <field name="id"/>
+                <field name="tid"/>
+                <field name="alias"/>
+                <field name="sn"/>
+                <field name="usage"/>
+                <field name="last_activity"/>
+                <field name="last_sync"/>
+                <button name="sync_transaction" type="object" string="Sync transaction" display="always"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="zk_transaction_view_list" model="ir.ui.view">
+        <field name="name">zk.transaction.list</field>
+        <field name="model">zk.transaction</field>
+        <field name="arch" type="xml">
+            <list multi_edit="1">
+                <header>
+                    <button name="sync_transactions" type="object" string="synchroniser" display="always"/>
+                </header>
+                <field name="tid"/>
+                <field name="emp"/>
+                <field name="emp_code"/>
+                <field name="first_name"/>
+                <field name="last_name"/>
+                <field name="punch_time"/>
+                <field name="terminal_sn"/>
+                <field name="terminal_alias"/>
+                <field name="upload_time"/>
+                <field name="terminal_id"/>
+                <field name="usage"/>
+                <field name="duplicate"/>
+                <field name="to_delete"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="action_zk_terminals" model="ir.actions.act_window">
+        <field name="name">Terminal</field>
+        <field name="res_model">zk.terminals</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_id" ref="zk_terminals_view_list"/>
+    </record>
+
+    <record id="action_zk_transactions" model="ir.actions.act_window">
+        <field name="name">Transactions</field>
+        <field name="res_model">zk.transaction</field>
+        <field name="view_mode">list,form</field>
+        <field name="view_id" ref="zk_transaction_view_list"/>
+    </record>
+
+    <record id="action_x_jour_repos" model="ir.actions.act_window">
+        <field name="name">VALIDATION HS</field>
+        <field name="res_model">x_jour_repos</field>
+        <field name="view_mode">list,form</field>
+    </record>
+
+    <menuitem id="menu_zk_root" name="ZK" sequence="80"/>
+    <menuitem id="menu_zk_time" name="Gestion de temps" parent="menu_zk_root" sequence="10"/>
+    <menuitem id="menu_zk_terminals" name="Terminal" parent="menu_zk_time" action="action_zk_terminals" sequence="10"/>
+    <menuitem id="menu_zk_transactions" name="Transactions" parent="menu_zk_time" action="action_zk_transactions" sequence="20"/>
+    <menuitem id="menu_zk_validation_hs" name="VALIDATION HS" parent="menu_zk_root" action="action_x_jour_repos" sequence="20"/>
+</odoo>

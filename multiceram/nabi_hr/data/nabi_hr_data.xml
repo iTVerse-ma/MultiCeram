@@ -1,0 +1,44 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <data noupdate="1">
+        <!-- Tâches planifiées créées à la main dans mc2 (ids 34, 35 et 36), inactives comme en production. -->
+        <record id="ir_cron_sync_employees" model="ir.cron">
+            <field name="name">Sync employees</field>
+            <field name="model_id" ref="model_zk_connector"/>
+            <field name="state">code</field>
+            <field name="code">model.sync_employees(page_size=10000,)</field>
+            <field name="interval_number">1</field>
+            <field name="interval_type">hours</field>
+            <field name="active" eval="False"/>
+        </record>
+
+        <record id="ir_cron_sync_transactions" model="ir.cron">
+            <field name="name">Sync Transactions</field>
+            <field name="model_id" ref="model_zk_connector"/>
+            <field name="state">code</field>
+            <field name="code">for o in env['zk.terminals'].search([]):
+    o.sync_transaction()</field>
+            <field name="interval_number">4</field>
+            <field name="interval_type">minutes</field>
+            <field name="active" eval="False"/>
+        </record>
+
+        <record id="ir_cron_cvsecurity_sync" model="ir.cron">
+            <field name="name">cvsecurity sync</field>
+            <field name="model_id" ref="model_zk_cvsecurity_sync"/>
+            <field name="state">code</field>
+            <field name="code">model.cron_sync_cvsecurity(startDate=datetime.datetime.now() - datetime.timedelta(hours=2),endDate=datetime.datetime.now() + datetime.timedelta(hours=2))</field>
+            <field name="interval_number">10</field>
+            <field name="interval_type">minutes</field>
+            <field name="active" eval="False"/>
+        </record>
+
+        <!-- Action serveur créée à la main dans mc2 (id 570). -->
+        <record id="action_server_show_duplicates" model="ir.actions.server">
+            <field name="name">Afficher les dupliqués</field>
+            <field name="model_id" ref="model_zk_transaction"/>
+            <field name="state">code</field>
+            <field name="code">env.cr.execute("update zk_transaction set duplicate = false where id in %s" ,(tuple(records.ids),))</field>
+        </record>
+    </data>
+</odoo>

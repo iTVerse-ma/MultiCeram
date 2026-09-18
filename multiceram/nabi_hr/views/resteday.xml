@@ -1,0 +1,62 @@
+<odoo>
+ 
+
+
+    <template id="portal_reste_days" name="Jours de repos">
+        <t t-call="portal.portal_layout">
+            <div class="container py-4">
+
+            <h2 class="text-center mb-4">Mes jours de repos</h2>
+
+            <!-- Message -->
+            <t t-if="debug and message">
+                <div class="alert alert-info text-center"><p t-esc="message"/></div>
+            </t>
+            <t t-if="debug and errors">
+                <div class="alert alert-danger text-center" t-foreach="errors" t-as="error"><p t-esc="error"/></div>
+            </t>
+            <t t-if="debug and error">
+                <div class="alert alert-danger text-center"><p t-esc="error"/></div>
+            </t>
+
+
+            <div class="table-responsive">
+                <table class="table table-bordered text-center align-middle">
+                <thead class="table-light">
+                    <tr>
+                    <th>Semaine</th>
+                    <th>Début</th>
+                    <th>Fin</th>
+                    <th colspan="7">Jours</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <t t-foreach="weeks" t-as="week">
+                    <tr t-att-class="'bg-warning' if week['is_current'] else ''">
+                        <td class="fw-bold"><t t-esc="week['week_num']"/></td>
+                        <td><t t-esc="week['start'].strftime('%d/%m/%Y')"/></td>
+                        <td><t t-esc="week['end'].strftime('%d/%m/%Y')"/></td>
+                        <t t-foreach="week['days']" t-as="day">
+                        <td>
+                            <form method="post" action="/my/toggle-reste-day" class="d-inline">
+                            <input type="hidden" name="reste_date" t-att-value="day['date']"/>
+                            <input type="hidden" name="shift" t-att-value="day['shift']"/>
+                            <button type="submit" t-attf-class="btn #{'btn-primary text-white' if day['selected'] else 'btn-outline-secondary'}                                        #{'border border-danger' if day['is_today'] else ''}                                        m-1" style=" font-size:0.75rem;">
+                                <t t-esc="day['day_of_week']"/> <br/>
+                                <t t-esc="day['label']"/>
+                            </button>
+                            </form>
+                        </td>
+                        </t>
+                    </tr>
+                    </t>
+                </tbody>
+                </table>
+            </div>
+
+            </div>
+        </t>
+        
+    </template>
+
+</odoo>

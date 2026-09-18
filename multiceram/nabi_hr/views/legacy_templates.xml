@@ -1,0 +1,1593 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Pages réellement servies en production (mc2) : versions « site web » enregistrées dans la base,
+         reprises telles quelles. Elles remplacent les versions de même identifiant des autres fichiers. -->
+    <!-- mc2, vue 2374 -->
+    <template id="portal_new_leave_form" name="portal_new_leave_form">
+    <t t-call="portal.portal_layout">
+                    <t t-set="additional_title">Contact Details</t>
+  <form method="post" class="o_portal_leave_form p-4">
+    <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+
+    <t t-if="error">
+      <div class="alert alert-danger" role="alert">
+        <t t-esc="error"/>
+      </div>
+    </t>
+
+    <div class="mb-3">
+      <label class="form-label fw-bold">Type de congé</label>
+      <select name="holiday_status_id" class="form-select form-control-lg">
+        <t t-foreach="request.env['hr.leave.type'].search([])" t-as="lt">
+          <option t-att-value="lt.id"><t t-esc="lt.name"/></option>
+        </t>
+      </select>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label fw-bold">Du</label>
+      <input type="date" name="date_from" class="form-control form-control-lg"/>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label fw-bold">Au</label>
+      <input type="date" name="date_to" class="form-control form-control-lg"/>
+    </div>
+
+    <div class="mb-3">
+      <label class="form-label fw-bold">Motif</label>
+      <textarea name="reason" rows="3" class="form-control form-control-lg"/>
+    </div>
+
+    <button type="submit" class="btn btn-primary btn-lg w-100 py-3 mt-3" style="border-radius: 12px;">
+      📅 Envoyer la demande
+    </button>
+  </form>
+  
+</t>
+    </template>
+
+    <!-- mc2, vue 2380 -->
+    <template id="portal_attendance_template" name="portal_attendance_template">
+    <!-- Désactivation des éléments standard du portail -->
+    <t t-set="no_header" t-value="True"/>
+    <t t-set="no_menu" t-value="True"/>
+    <t t-set="no_footer" t-value="True"/>
+    <t t-set="full_width" t-value="True"/>
+    <t t-set="portal_data" t-value="request.env['zk.transaction']"/>
+    <t t-set="portal_punches" t-value="request.env['zk.transaction']"/>
+    <t t-call="website.layout">
+        <div class="container-fluid my-4" id="attendance-portal">
+            <div class="row">
+                <!-- 🔹 Panneau latéral de recherche -->
+                
+                <div class="col-md-3">
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-primary text-white">
+                            <i class="fa fa-search me-2"/>Filtres
+                        
+                        </div>
+                       
+                        <div class="mb-2 card-body">
+                            <label class="form-label small">Employé</label>
+                            <input type="text" id="attendance_search" class="form-control form-control-sm" placeholder="Nom employé..."/>
+                        </div>
+    
+                        <div class="mb-2 card-body">
+                            <label class="form-label small">Type</label>
+                            <select id="attendance_filter" class="form-select w-25">
+                    <option value="all">Tous</option>
+                    <option value="check_in">Check In</option>
+                    <option value="check_out">Check Out</option>
+                </select>
+                        </div>
+                    </div> 
+               
+                    <div class="card shadow-sm">
+                        <div class="card-header bg-primary text-white">
+                            <i class="fa fa-filter me-2"/>Filtres avancés
+                        
+                        </div>
+                        <div class="card-body">
+                            <!--
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Employé</label>
+                                <select id="filter_employee" class="form-select form-select-sm">
+                                    <option value="all">Tous</option>
+                                 
+                                   <t t-foreach="employees" t-as="emp"><option t-att-value="emp.id" t-esc="f'{emp.barcode}-{emp.name}'"/></t> 
+                                   
+                                </select>
+                            </div>
+                            -->
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Terminal</label>
+                                <select id="filter_terminal" class="form-select form-select-sm" multiple="1">
+                                 <t t-foreach="terminals" t-as="t"><option t-att-value="t.id" t-esc="t.alias"/></t>
+                                   
+                                </select>
+                                <small class="text-muted">Sélection multiple possible</small>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <label class="form-label fw-semibold">Date</label>
+                                <div class="d-flex gap-2">
+                                    <input type="date" id="filter_from" class="form-control form-control-sm" t-att-value="start_day"/>
+                                    <!-- <input type="date" id="filter_to" class="form-control form-control-sm" t-att-value="end_day"/> -->
+                                </div>
+                            </div>
+                            
+                            <div class="mb-3">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="filter_doors"/>
+                                    <label class="form-check-label">Porte principale ?</label>
+                                </div>
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="filter_restaurant"/>
+                                    <label class="form-check-label">Restaurant ?</label>
+                                </div>
+                            </div>
+                            
+                          
+                            <div class="d-grid">
+                                <button id="filter_apply" class="btn btn-primary btn-sm">
+                                    <i class="fa fa-search me-1"/>Appliquer
+                                
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- 🔹 Zone principale -->
+                
+                
+                <div class="col-md-9">
+                    <div class="d-flex justify-content-between align-items-center mb-3">
+                        <h2 class="mb-0">Pointages :: Anomalies</h2>
+                        <div>
+                            <button id="prev-day" class="btn btn-outline-secondary btn-sm me-1">
+                                <i class="fa fa-chevron-left"/> Jour précédent
+                            
+                            </button>
+                            <button id="next-day" class="btn btn-outline-secondary btn-sm">
+                                Jour suivant 
+                                <i class="fa fa-chevron-right"/>
+                            </button>
+                        </div>
+                    </div>
+                    <!-- Tableau principal -->
+                    <table class="table table-striped table-hover">
+                        <thead class="table-light">
+                            <tr>
+                                <th colspan="2">Employé</th>
+                               
+                                <th>Couloir</th>
+                                <th>Porte</th>
+                                <th>Restaurant</th>
+                                <th>Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody id="attendance-list">
+                            <!--
+                            <AttendancePortalLine record="test"/>
+                            -->
+                            <tr id="attendance-spinner-row" style="display:none;" t-on-click="showPunchDialog(record)" class="punch-row cursor-pointer">
+                                <td colspan="6" class="text-center py-2">
+                                    <i class="fa fa-spinner fa-spin text-secondary"/>
+                            <span class="ms-2 text-muted">Chargement...</span>
+                                </td>
+                            </tr>
+                        </tbody>
+                    </table>
+                    <div class="modal fade" id="punchActionModal" tabindex="-1" aria-hidden="true">
+                        <div class="modal-dialog modal-dialog-centered">
+                            <div class="modal-content shadow-lg rounded-4 border-0">
+                                <div class="modal-header bg-primary text-white">
+                                    <h5 class="modal-title">Actions sur le pointage</h5>
+                                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"/>
+                                </div>
+                                <div class="modal-body">
+                                    <div id="punch-actions-container"/></div>
+                                <div class="modal-footer">
+                                    <button class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="text-center mt-3">
+                        <button id="load-more" class="btn btn-outline-primary btn-sm">
+                            <i class="fa fa-plus-circle me-1"/>Charger plus
+                        
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </t>
+    </template>
+
+    <!-- mc2, vue 2606 -->
+    <template id="portal_my_overtime" name="My overtimes">
+    <t t-call="portal.portal_layout">
+        <t t-set="breadcrumbs_searchbar" t-value="True"/>
+        <t t-call="portal.portal_searchbar">
+            <t t-set="title">Heures supplémentaires</t>
+        </t>
+        <t t-if="not overtimes">
+            <p class="alert alert-warning">There are currently no overtime for your account.</p>
+        </t>
+        <t tt-if="overtimes" t-call="portal.portal_table">
+            <thead>
+                <tr class="active">
+                    <th name="invoice_number">Invoice #</th>
+                    <th name="invoice_date">Invoice Date</th>
+                    <th name="due_date" class="d-none d-md-table-cell">Due Date</th>
+                    <th name="amount_due" class="text-end pe-3">Amount Due</th>
+                    <th name="status">Status</th>
+                </tr>
+            </thead>
+            <tbody/>
+        </t>
+    </t>
+    </template>
+
+    <!-- mc2, vue 2609 -->
+    <template id="portal_my_restaurant" name="Anomalies view" customize_show="True">
+    <!-- Hide portal header/footer/menu -->
+    <t t-set="no_header" t-value="True"/>
+    <t t-set="no_menu" t-value="True"/>
+    <t t-set="no_footer" t-value="True"/>
+    <t t-set="full_width" t-value="True"/>
+    <t t-set="breadcrumbs_searchbar" t-value="True"/>
+    <t t-set="searchbar_inputs" t-value="[]"/>
+    <!-- Use lightweight layout -->
+    <t t-lang="fr_FR" t-call="portal.portal_layout">
+        <nav class="  navbar navbar-expand-lg navbar-light bg-light justify-content-between">
+                <a class="navbar-brand" href="#">
+                    <img src="/logo" height="40" class="d-inline-block align-top" alt=""/>
+                    <span>Restaurant</span>
+                </a>
+                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"/>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                    <ul class="navbar-nav mr-auto">
+                        <li class="nav-item active">
+                            <a class="nav-link" href="/my">Home</a>
+                        </li>
+                        
+                        <!--
+                      <li class="nav-item dropdown"><a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                          Dropdown
+                        </a><div class="dropdown-menu" aria-labelledby="navbarDropdown"><a class="dropdown-item" href="#">Action</a><a class="dropdown-item" href="#">Another action</a><div class="dropdown-divider"/><a class="dropdown-item" href="#">Something else here</a></div></li><li class="nav-item"><a class="nav-link disabled" href="#">Disabled</a></li>
+                      -->
+                    </ul>
+                </div>
+            <div class="nav flex-column flex-sm-row gap-2 ms-auto p-0 mb-3 mb-lg-0 mt-1 mt-lg-0">
+                <form classs="form-inline o_portal_search_panel ">
+                    <div class="input-group w-100">
+                        <input type="date" class="form-control border-0 " placeholder="Rechercher" t-att-value="date_from" name="date_from"/>
+                        <input type="date" class="form-control border-0 " placeholder="Rechercher" t-att-value="date_to" name="date_to"/>
+                        <button class="btn btn-outline-primary" type="submit">
+                            <span class="oi oi-search"/>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </nav>
+        <t t-if="not punches">
+            <p class="alert alert-warning">Il n'y a pas de pointage pour la recherche encours</p>
+        </t>
+        <div class=" p-2 " id="AnomalieTableWrapper">
+            <!-- Filters  WWWWW-->
+            <t class="d-flex flex-direction-row">
+                <t t-set="employee" t-value="request.env['hr.employee'].search([('barcode','=',matricule)])"/>
+                <t t-set="emp_zkid" t-value="employee.zk_id"/></t>
+            <div class=" d-flex flex-direction-row">
+                <!-- Punches Table -->
+                <div class="sticky-top ml32 col" style="height: 90vh; overflow-y: auto;">
+                     
+                        <div>
+                            <button data-action="export_xlsx">⬇ Export CSV</button>
+                        </div>
+                        
+                        
+                        <div class="float-end" style="display:flex; justify-content:space-between">
+                            <div>
+                                <label>Rows per page:</label>
+                                <select id="page_size">
+                                    <option value="10">10</option>
+                                    <option value="25">25</option>
+                                    <option value="50">50</option>
+                                    <option value="100">100</option>
+                                    <option value="-1">All</option>
+                                </select>
+                                <div id="pager" class="pagination float-end"/></div>
+                        </div>
+                 
+                    <table id="myTable" class="table table-striped table-sm table-hover sortable">
+                        <colgroup>
+                            <col span="10" class="border"/>
+                        </colgroup>
+                        <thead class="table-light position-sticky sticky-top">
+                            <tr>
+                                <th>
+                                    <span>id</span>
+                                </th>
+                                <!--
+                                <th>
+                                    <button class="btn btn-sm btn-outline-secondary sort-btn">↕</button>
+                                    <button class="btn btn-sm btn-outline-primary filter-btn">🔍</button>
+                                    <input class="col-filter d-none" placeholder="Filter lignes"/>
+                                </th>
+                              -->
+                                <th data-sort="number">Mat.
+                                    
+                                    
+                                    
+                                    
+                                    <button class="btn btn-sm btn-outline-secondary sort-btn">↕</button>
+                                    <button class="btn btn-sm btn-outline-primary filter-btn">🔍</button>
+                                    <input type="number" class="col-filter d-none" placeholder="Filter Matricule"/>
+                                </th>
+                                <th data-sort="text">Nom
+                                    
+                                    
+                                    
+                                    
+                                    <button class="btn btn-sm btn-outline-secondary sort-btn">↕</button>
+                                    <button class="btn btn-sm btn-outline-primary filter-btn">🔍</button>
+                                    <input class="col-filter d-none" placeholder="Filter Nom"/>
+                                </th>
+                               
+                                 <th data-sort="text"> Département
+                                    
+                                    
+                                    
+                                    
+                                    <button class="btn btn-sm btn-outline-secondary sort-btn">↕</button>
+                                    <button class="btn btn-sm btn-outline-primary filter-btn">🔍</button>
+                                    <input type="date" class="col-filter d-none" placeholder="Filter Date"/>
+                                </th>
+                                  <th data-sort="text"> Date
+                                    
+                                    
+                                    
+                                    
+                                    <button class="btn btn-sm btn-outline-secondary sort-btn">↕</button>
+                                    <button class="btn btn-sm btn-outline-primary filter-btn">🔍</button>
+                                    <input type="date" class="col-filter d-none" placeholder="Filter Date"/>
+                                </th>
+                                <th>
+                                    Heure
+                                </th>
+                                
+                            </tr>
+                            <!--
+                        
+                            <tr class="column-filters"><th><input class="col-filter"/></th><th><input class="col-filter"/></th><th><input class="col-filter"/></th><th><input class="col-filter"/></th><th><input class="col-filter"/></th><th><input class="col-filter"/></th></tr>
+                            -->
+                        </thead>
+                        <tbody id="punches_table_body">
+                            <t t-set="Normalized" t-value="lambda x:sorted(list(set(x.mapped(lambda x:x.punch_time and x.punch_time.strftime('%H:%M') or '####'))))"/>
+                            <t t-set="showPunches" t-value="lambda x:' - '.join(Normalized(x))"/>
+                            
+                                <tr t-foreach="punches" t-as="p">
+                                    <!--
+                                    <td>
+                                        <t t-esc="p_index"/>
+                                    </td>
+                                    -->
+                                    <td><span t-esc="p.id"/></td>
+                                   
+                                    <td>
+                                        <span class="test-right" t-esc="p.employee_id.barcode"/>
+                                    </td>
+                                    <td>
+                                        <span t-esc="p.employee_id.name"/>
+                                    </td>
+                                     <td>
+                                        <span t-esc="p.employee_id.department_id.name"/>
+                                    </td>
+                                    <td>
+                                        <span t-esc="p.punch_time.date()"/>
+                                    </td>
+                                    <td>
+                                        <span t-esc="p.punch_time.strftime('%H:%M')"/>
+                                    </td>
+                                    
+                                    
+                                </tr>
+                          
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </t>
+    </template>
+
+    <!-- mc2, vue 2695 -->
+    <template id="portal_my_home" name="nabi: Home" inherit_id="portal.portal_my_home" priority="60" customize_show="True">
+        <xpath expr="//div[hasclass('o_portal_docs')]" position="before">
+          <t t-set="portal_ot_category_enable" t-value="True"/>
+          <t t-set="portal_leave_category_enable" t-value="True"/>
+          <t t-set="portal_rh_category_enable" t-value="True"/>
+          
+        </xpath>
+        <xpath expr="//div[hasclass('o_portal_category')]" position="before">
+          
+            <div t-if="portal_rh_category_enable" class="o_portal_category row g-2 mt-3" id="portal_rh_category"/>
+            <div t-if="portal_ot_category_enable" class="o_portal_category row g-2 mt-3" id="portal_ot_category"/>
+            <div t-if="portal_leave_category_enable" class="o_portal_category row g-2 mt-3" id="portal_leave_category"/>
+
+          
+          
+        </xpath> 
+        
+        
+        
+    </template>
+
+    <!-- mc2, vue 2696 -->
+    <template id="overtime" name="Overtimes" inherit_id="portal.portal_my_home" priority="61" customize_show="True">
+    <div id="portal_ot_category" position="inside"/>
+    <div id="portal_leave_category" position="inside">
+        <h3>Self-service</h3>
+        <t t-call="portal.portal_docs_entry">
+            <t t-set="icon" t-value="'/sale/static/src/img/bag.svg'"/>
+            <t t-set="title">Congés</t>
+            <t t-set="url" t-value="'/my/leaves'"/>
+            <t t-set="text">Suivres mes congés</t>
+            <t t-set="config_card" t-value="True"/></t>
+        <!--
+        <t t-call="portal.portal_docs_entry">
+            <t t-set="icon" t-value="'/sale/static/src/img/bag.svg'"/>
+            <t t-set="title">Autorisations</t>
+            <t t-set="url" t-value="'/my/authorisation'"/>
+            <t t-set="text">Suivres mes authorisations</t>
+            <t t-set="config_card" t-value="True"/></t>
+            -->
+            <t t-call="portal.portal_docs_entry">
+            <t t-set="icon" t-value="'/nabi_hr/static/src/img/timesheet.svg'"/>
+            <t t-set="title">Validation des heures supplèmentaires</t>
+            <t t-set="url" t-value="'/my/HeureSupp/Validation?filterby=invoices'"/>
+            <t t-set="text">Suivres tes HS</t>
+            <t t-set="config_card" t-value="True"/></t>
+        <!--
+        <t t-call="portal.portal_docs_entry"><t t-set="icon" t-value="'/nabi_hr/static/src/img/Annual_Time_Off.svg'"/><t t-set="title">Jour de repos</t><t t-set="url" t-value="'/my/reste-days'"/><t t-set="text">Planning des jours de repos</t><t t-set="config_card" t-value="True"/></t>
+            -->
+    </div>
+    <div id="portal_rh_category" position="inside">
+        <h3>Ressources humaines</h3>
+        <t t-call="portal.portal_docs_entry">
+            <t t-set="icon" t-value="'/nabi_hr/static/src/img/timesheet.svg'"/>
+            <t t-set="title">Anomalies de pointages</t>
+            <t t-set="url" t-value="f'/my/attendance/get_anomalie?start_day={datetime.datetime.now().date() + datetime.timedelta(days=-1)}'"/>
+            <t t-set="text">Gestion des pointages et anomalies</t>
+            <t t-set="config_card" t-value="True"/></t>
+        <t t-call="portal.portal_docs_entry">
+            <t t-set="icon" t-value="'/nabi_hr/static/src/img/timesheet.svg'"/>
+            <t t-set="title">Pointages / employée</t>
+            <t t-set="url" t-value="f'/my/attendance/get_punch_stacked'"/>
+            <t t-set="text">Gestion des pointages et anomalies</t>
+            <t t-set="config_card" t-value="True"/></t>
+        
+        <!--
+         <t t-call="portal.portal_docs_entry"><t t-set="icon" t-value="'/nabi_hr/static/src/img/timesheet.svg'"/><t t-set="title">Etat de pointages</t><t t-set="url" t-value="f'/my/attendance/{datetime.datetime.now().date() + datetime.timedelta(days=-1)}'"/><t t-set="text">Gestion des pointages </t><t t-set="config_card" t-value="True"/></t><t t-call="portal.portal_docs_entry"><t t-set="icon" t-value="'/nabi_hr/static/src/img/timesheet.svg'"/><t t-set="title">Pointages / Date</t><t t-set="url" t-value="f'/my/attendance/get_punch_date'"/><t t-set="text">Gestion des pointages et anomalies</t><t t-set="config_card" t-value="True"/></t>
+            -->
+        <t t-call="portal.portal_docs_entry">
+            <t t-set="icon" t-value="'/nabi_hr/static/src/img/timesheet.svg'"/>
+            <t t-set="title">Restaurant</t>
+            <t t-set="url" t-value="f'/my/restaurant?date_from={datetime.datetime.now().date() + datetime.timedelta(days=-1)}'"/>
+            <t t-set="text">Gestion des service restauration</t>
+            <t t-set="config_card" t-value="True"/></t>
+    </div>
+    </template>
+
+    <!-- mc2, vue 2697 -->
+    <template id="portal_punch_stacked_template" name="get punches view" customize_show="True">
+    <!-- Hide portal header/footer/menu -->
+    <t t-set="no_header" t-value="True"/>
+    <t t-set="no_menu" t-value="True"/>
+    <t t-set="no_footer" t-value="True"/>
+    <t t-set="full_width" t-value="True"/>
+    <t t-set="breadcrumbs_searchbar" t-value="True"/>
+    <t t-set="searchbar_inputs" t-value="[]"/>
+    <!-- Use lightweight layout -->
+    <t t-lang="fr_FR" t-call="portal.portal_layout">
+        <t>
+            <nav class="  navbar navbar-expand-lg navbar-light bg-light justify-content-between">
+                <a class="navbar-brand" href="#">
+                    <img src="/logo" height="40" class="d-inline-block align-top" alt=""/>
+                    <span>Pointage/employé</span>
+                </a>
+                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"/>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                    <ul class="navbar-nav mr-auto">
+                        <li class="nav-item active">
+                            <a class="nav-link" href="/my">Home</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" t-att-href="f'/my/attendance/get_anomalie?start_day={end_day}'">Toutes les anomalies</a>
+                        </li>
+                        <!--
+                      <li class="nav-item dropdown"><a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                          Dropdown
+                        </a><div class="dropdown-menu" aria-labelledby="navbarDropdown"><a class="dropdown-item" href="#">Action</a><a class="dropdown-item" href="#">Another action</a><div class="dropdown-divider"/><a class="dropdown-item" href="#">Something else here</a></div></li><li class="nav-item"><a class="nav-link disabled" href="#">Disabled</a></li>
+                      -->
+                    </ul>
+                </div>
+                <div class="nav flex-column flex-sm-row gap-2 ms-auto p-0 mb-3 mb-lg-0 mt-1 mt-lg-0">
+                    <form classs="form-inline o_portal_search_panel ">
+                        <!--
+                    <div class="input-group w-100"><input type="date" class="form-control border-0 " placeholder="Rechercher" t-att-value="start_day" name="start_day"/><input type="date" class="form-control border-0 " placeholder="Rechercher" t-att-value="end_day" name="end_day"/><button class="btn btn-outline-primary" type="submit"><span class="oi oi-search"/></button></div>
+                    -->
+                        <div class="input-group w-100">
+                            <!-- <t t-set="employee" t-value="request.env['hr.employee'].search([('barcode','=',emp_id)])"/> -->
+                            <!-- <t t-set="emp_zkid" t-value="employee.zk_id"/> -->
+                            <h3 t-esc="f'{emp_id} - {portal_punches and portal_punches[:1].employee_id.name or emp_id}'"/>
+                            <span class="btn btn-sm" data-bs-toggle="collapse" data-bs-target="#emp_params" aria-bs-expanded="false" aria-controls="emp_params">
+                                <i class="fa fa-lg fa-gear"/>
+                            </span>
+                        </div>
+                    </form>
+                </div>
+            </nav>
+            <div id="emp_params" class=" collapse navbar navbar-light bg-light justify-content-between ">
+                <div class="col-6 offset-6">
+                    <form action="/my/employee/update" method="POST">
+                        <input type="hidden" name="terminal_ids" t-att-value="','.join(map(str,terminal_ids))"/>
+                        <input type="hidden" name="emp_id" t-att-value="emp_id"/>
+                        <input type="hidden" name="start_date" t-att-value="start_date"/>
+                        <input type="hidden" name="end_date" t-att-value="end_date"/>
+                        
+                        <div class="form-control">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="pauseCheckBox" name="x_pause" t-att-value="employee.x_pause" t-att-checked="employee.x_pause and 'checked' or None"/>
+                                <input type="hidden" name="x_pause" value=""/>
+                                <label class="form-check-label" for="pauseCheckBox">
+                                    Pause automatique ?
+                                  </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="HeureSupp" name="x_heure_supp" t-att-value="employee.x_heure_supp" t-att-checked="employee.x_heure_supp and 'checked' or None"/>
+                                <input type="hidden" name="x_heure_supp" value=""/>
+                                <label class="form-check-label" for="HeureSupp">
+                                    Heure supplèmentaire ?
+                                  </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="IgnoreUHF" name="x_ignore_uhf" t-att-value="employee.x_ignore_uhf" t-att-checked="employee.x_ignore_uhf and 'checked' or None"/>
+                                <input type="hidden" name="x_ignore_uhf" value=""/>
+                                <label class="form-check-label" for="IgnoreUHF">
+                                    Ignorer Pointage UHF ?
+                                  </label>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label" for="horaire">
+                                    Horaire
+                                  </label>
+                                    <select class="form-control" type="select" id="horaire" name="x_horaire">
+                                        <option/>
+                                        <option value="normal" t-att-selected="employee.x_horaire and employee.x_horaire =='normal'">Normal</option>
+                                        <option value="poste" t-att-selected="employee.x_horaire and employee.x_horaire =='poste'">Postier</option>
+                                        <option value="securite" t-att-selected="employee.x_horaire and employee.x_horaire =='securite'">Agent de sécurité</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="NombreHeure">
+                                   Nombre  d'heures par jour:
+                                  </label>
+                                    <input class="form-control" id="NombreHeure" type="number" name="x_day_hour" t-att-value="employee.x_day_hour or 8"/>
+                                </div>
+                                
+                                 <div class="form-group">
+                                    <label class="form-label" for="NombreHeure">
+                                   Heures travaillé par semaine(default : 44 heures)
+                                  </label>
+                                    <input class="form-control" id="NombreHeureWeek" type="number" name="x_workedday_week" t-att-value="employee.x_workedday_week or 44"/>
+                                </div>
+                                
+                            </div>
+                             <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label" for="coach_id">
+                                    Directeur
+                                  </label>
+                                    <select class="form-control" type="select" id="coach_id" name="coach_id">
+                                        <option value="0" t-att-selected="not employee.coach_id">-</option>
+                                        <t t-foreach="request.env['hr.employee'].search([('barcode','=like','__%'),'!',('barcode','=like','9999%')]).sorted(lambda x:x.barcode.zfill(9))" t-as="coach">
+                                            <option t-att-value="coach.id" t-esc="f'{coach.barcode}- {coach.name}'" t-att-selected="employee.coach_id and coach.id == employee.coach_id.id"/>
+                                        </t>                                           
+                                    
+                                         </select>
+                                </div>
+                               
+                                
+                            </div>
+                             <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label" for="coach_id">
+                                    Responsable
+                                  </label>
+                                    <select class="form-control" type="select" id="parent_id" name="parent_id">
+                                        <option value="0" t-att-selected="not employee.parent_id">-</option>
+                                        <t t-foreach="request.env['hr.employee'].search([('barcode','=like','__%'),'!',('barcode','=like','9999%')]).sorted(lambda x:x.barcode.zfill(9))" t-as="coach">
+                                            <option t-att-value="coach.id" t-esc="f'{coach.barcode}- {coach.name}'" t-att-selected="employee.parent_id and coach.id == employee.parent_id.id"/>
+                                        </t>                                           
+                                    
+                                         </select>
+                                </div>
+                               
+                                
+                            </div>
+                            <input type="hidden" name="employee_id" t-att-value="employee.id"/>
+                            <button class="btn btn-primary" type="submit">Valide</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <!-- Jours fériers -->
+            <!-- <t t-set="jf" t-value="request.env['resource.calendar.leaves'].search([('resource_id','=',False),'|','&amp;',('date_from','&gt;=',start_day.strftime('%Y-%m-%d')),('date_from','&lt;=',end_day.strftime('%Y-%m-%d')),'&amp;',('date_to','&gt;=',start_day.strftime('%Y-%m-%d')),('date_to','&lt;=',end_day.strftime('%Y-%m-%d'))])"/> --></t>
+        <!-- Filters  WWWWW-->
+        <div id="stacked-punches-page" class=" d-flex flex-direction-row">
+            <div id="sidebar1" t-attf-class="bg-300  bg-primary collapse col-2 vh-100 p-2 {{'show' if not portal_punches else ''}}">
+                <div id="" class=" mb-3 d-flex flex-column ">
+                    <div class="m-2">
+                        <label>Employé</label>
+                        <input id="input_employee" class="form-control form-control-sm"/>
+                        <select id="filter_employee" class="form-select form-select-sm">
+                            <t t-foreach="request.env['hr.employee'].search([('barcode','=like','__%'),'!',('barcode','=like','9999%')]).sorted(lambda x:x.barcode.zfill(9))" t-as="emp">
+                                <option t-att-value="emp.barcode" t-esc="f'{emp.barcode}- {emp.name}'" t-att-selected="emp.barcode == f'{emp_id}'"/>
+                            </t>
+                        </select>
+                    </div>
+                    <div class="mb-2 ">
+                        <label>Terminals</label>
+                        <select style="height:200px" id="filter_terminal" class="form-select form-select-sm" multiple="1">
+                            <t t-foreach="terminals.grouped('usage').items()" t-as="gterm">
+                                <optgroup t-att-label="gterm[1] and dict(gterm[1][:1].fields_get()['usage']['selection']).get(gterm[1][:1].usage, '')">
+                                    <option t-foreach="gterm[1]" t-as="term" t-att-value="term.id" t-esc="term.alias" t-att-selected="  term.id in (terminal_ids or []) if terminal_ids else term.usage=='t'"/>
+                                </optgroup>
+                            </t>
+                        </select>
+                    </div>
+                    <div class="mb-2">
+                        <label>De :</label>
+                        <input type="date" id="filter_from" class="form-control form-control-sm" t-att-value="start_day"/>
+                    </div>
+                    <div class="mb-2">
+                        <label>A: </label>
+                        <input type="date" id="filter_to" class="form-control form-control-sm" t-att-value="end_day "/>
+                    </div>
+                    <div class=" mb-2 ">
+                        <button id="filter_btn" class="btn btn-primary btn-sm w-100">Filter / Refresh</button>
+                    </div>
+                </div>
+            </div>
+            <!-- Punches Table -->
+            <div class="  ml8 col" style="height: 90vh; overflow-y: auto;">
+                <div class="  mt-1">
+                    <button class="btn btn- " data-bs-toggle="collapse" data-bs-target="#sidebar1" aria-bs-expanded="false" aria-controls="sidebar">
+                        <i class="oi oi-panel-right"/>
+                    </button>
+                    <button class="btn btn-sm  btn-warning rounded-1" data-action="add_leave" data-empid="263" data-curdate="2025-11-05">
+                        <i class="fa fa-file-text"/> Congé    
+                    </button>
+                    <button class="btn btn-sm  btn-success rounded-1" data-action="add_punch" t-att-data-id="" t-att-data-empid="emp_id" t-att-data-curdate="start_day">
+                        <i class="fa fa-plus"/>Ajouter   
+                    
+                    </button>
+                    <button class="btn  btn-sm  btn-success rounded-1" data-action="add_punch" t-att-data-id="" t-att-data-empid="emp_id" t-att-data-curdate="start_day">
+                        <i class="fa fa-rocket"/>Raffraichir    
+                    
+                    </button>
+                    
+                      <button class="btn  btn-sm  btn-success rounded-1" data-action="export_xlsx">
+                        <i class="fa fa-arrow-down"/>Exporter CSV    
+                    
+                    </button>
+                </div>
+                <t>
+                    <p t-if="jf" t-attf-class="alert alert-success alert-dismissible fade show text-center m-1" role="alert">
+                        <t t-foreach="jf" t-as="x">
+                            <t t-esc="f' {x.name} '"/>
+                            <t t-esc="f'{x.date_from.date()} - {x.date_to.date()}  '"/></t>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"/>
+                    </p>
+                    <p t-if="request.params.get('message')" class="alert alert-warning alert-dismissible fade show  m-1  text-center">
+                        <strong t-esc="request.params.get('message')"/>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"/>
+                    </p>
+                    <p t-if="not portal_punches" class="alert alert-warning alert-dismissible fade show  m-1  text-center">
+                        <strong>Il n'y a pas de pointage pour la recherche encours   </strong>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"/>
+                    </p>
+                </t>
+                <table class="table table-striped table-sm table-hover sortable mt-1" data-to-export="true">
+                    <colgroup>
+                        <col span="3" class="border"/>
+                        <col span="2"/>
+                        <col span="999" class="border"/>
+                    </colgroup>
+                    <thead class="table-light  position-sticky sticky-top">
+                        <tr>
+                            <th rowspan="2" colspan="2">Date</th>
+                            <th rowspan="2" colspan="2">Temps</th>
+                            <th rowspan="2">- </th>
+                            <th colspan="2">Heures</th>
+                            <th rowspan="2">Pause </th>
+                            <th rowspan="2">Abs. </th>
+                            <th colspan="7">Heure Supp</th>
+                            <th rowspan="2">Congé</th>
+                            <th rowspan="2">JF</th>
+                            <th rowspan="2">JR</th>
+                        </tr>
+                        <tr>
+                            <th>H.Prés</th>
+                            <th>H.Nor</th>
+                            <th colspan="">HS</th>
+                            <th colspan="">corrigé</th>
+                            <th colspan="2">declaré</th>
+                            <th>25%</th>
+                            <th>50%</th>
+                            <th>100%</th>
+                        </tr>
+                    </thead>
+                    <tbody id="punches_table_body">
+                        <t t-foreach="pgroupeds" t-as="pl">
+                            <!-- <t t-set="jr"           t-value="request.env['x_jour_repos'].search([('x_employee_id','=',employee.id),('x_date','=',pl.jour)])"/><t t-set="pgrouped1"    t-value="pgroupeds[pgrouped_index+1:pgrouped_index+2]"/><t t-set="is_holiday"   t-value="jf and jf.filtered(lambda x: pl.jour &gt;= x.date_from.date() and pl.jour &lt;= x.date_to.date()  )  or jf.browse(0)"/>
+                             -->
+                            <t t-set="holiday">
+                                <span t-if="pl.value.is_holiday " class="text-success">
+                                    <i class="fa fa-calendar-oo"/>JF   </span>
+                            </t>
+                            <!-- Congées-->
+                            <!-- <t t-set="is_conge" t-value="conges.filtered(lambda x:pl.jour &gt;= x.request_date_from and pl.jour &lt;= x.request_date_to)"/> -->
+                            <t t-set="conge">
+                                <span t-if="pl.value.is_conge " class="text-info">
+                                    <i class="fa fa-calendar"/>
+                                    <t t-esc="pl.value.is_conge.state"/>
+                                </span>
+                            </t>
+                            <!-- 
+                               <t t-set="pgrouped" t-value="[day,portal_punches.filtered(lambda x:(x.x_date_appliquee or x.punch_time.date())==day).sorted('punch_time')]"/>
+                               -->
+                            <!-- <t t-set="all_punches" t-value="pgrouped[1] - (to_skip or pgrouped[1].browse(0))"/> -->
+                            <t>
+                                <t>
+                                    <!-- <t t-set="to_skip" t-value="request.env['zk.transaction'].browse(0)"/><t t-set="breack" t-value="False"/><t t-as="pp" t-foreach="pgrouped1 and pgrouped1[0] and pgrouped1[0][1] or []" t-if="pgrouped1 and (len(all_punches)==1  and  all_punches.sens=='in') or ( all_punches[:1].sens=='out' and all_punches[-1:].sens=='in' )"><t t-if=" not breack and pp.sens=='out'"><t t-set="to_skip" t-value="to_skip|pp"/></t><t t-else=""><t t-set="breack" t-value="True"/></t></t> -->
+                                    <!-- <t t-set="all_punches" t-value="all_punches | to_skip"/> -->
+                                    <!-- <t t-set="clean_punches" t-value="all_punches - (all_punches[:1] if all_punches[:1].sens=='out' else all_punches[-1:] if all_punches[-1:].sens=='in' else all_punches.browse(0) ) "/> -->
+                                    <!-- <t t-set="pause" t-value="clean_punches[1:-1].filtered(lambda x:x.usage=='p')"/><t t-set="presence" t-value="clean_punches.filtered(lambda x:x.usage in ('t',False))"/><t t-set="restau" t-value="clean_punches.filtered(lambda x:x.usage=='r')"/><t t-if="all_punches" t-set="worked_day" t-value="worked_day+1"/>
+                                    --></t>
+                                <tr t-if="pl.value.all_punches" t-att-class="'table-active' if pl.jour.weekday()==6 else ''">
+                                    <!-- <t t-set="jr_presence" t-value="jr_presence+1"/> -->
+                                    <td>
+                                        <span t-esc="format_date(pl.jour)"/>
+                                    </td>
+                                    <th scope="row">
+                                        <span t-esc="pl.jour.strftime('%d/%m/%Y')"/>
+                                    </th>
+                                    <td colspan="2">
+                                        <!--temps-->
+                                        <div class="d-flex flex-direction-row flex-wrap toggleButtons">
+                                            <div t-foreach="pl.value.all_punches" t-as="p" t-att-data-id="p.id" t-attf-style="min-width:75px" t-attf-class="card toggleButtons m-1 rounded p-1 border {{{'t':'bg-primary','p':'bg-success', 'r':'bg-warning',False:'bg-secondary'}.get(p.terminal_id.usage)}}" t-att-caption="p.terminal_id.alias">
+                                                
+                                                <span>
+                                                    
+                                                    <i t-attf-class="fa {{ {'in':'fa-arrow-circle-o-down','out':'fa-arrow-circle-o-up'}.get(p.terminal_id.sens)}}" t-att-style="{'in':'color:lightgreen','out':'color:red'}.get(p.terminal_id.sens)"/>
+                                                    <span t-attf-class="text-white  " t-esc="p.punch_time.strftime('%H:%M') + ( ' J+1' if p.punch_time.date() &gt; pl.jour and p.sens =='out' else '')"/>
+                                                    <div t-attf-class="btns d-inline-block d-none">
+                                                        <button class=" btn btn-sm btn-primary" data-action="delete" data-empid="773" t-att-data-tid="p.tid" t-att-data-id="p.id">
+                                                            <i class="fa fa-trash"/>
+                                                            <t t-esc="p.to_delete"/>
+                                                        </button>
+                                                    </div>
+                                                    <span t-attf-class="badge detail d-block d-none ">
+                                                        <i t-attf-class="fa {{ {'t':'fa-hourglass-o','r':'fa-cutelery','p':'fa-car'}.get(p.usage) }}"/>
+                                                        <t t-esc="p.terminal_alias"/>
+                                                        <br/>
+                                                        <br/><sub t-esc="p.punch_time.strftime('%d/%m/%Y')"/>
+                                                        <sub t-if="p.sens=='out'" t-attf-class="text-white  " t-esc="roundTo20(p.punch_time).strftime('(%H:%M)')"/>
+                                                        <sub t-if="p.sens=='in'" t-attf-class="text-white  " t-esc="roundTo30(p.punch_time,mode='proche').strftime('(%H:%M)')"/>
+                                                    </span>
+                                                </span>
+                                            </div>
+                                            <div t-attf-class="m-1 rounded p-1 border d-inline">
+                                                <button class="btn btn-sm " data-action="add_punch" t-att-data-empid="emp_zkid" t-att-data-curdate="pl.jour">
+                                                    <i class="fa fa-plus"/>
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <!-- <t t-set="anomalie" t-value="False"/> -->
+                                    <td>
+                                        <!--  Anomalie -->
+                                        
+                                       
+                                            <span t-foreach="list(pl.value.anomalies)" t-as="s" t-att-title="s['message'] if s else ''">
+                                                <i t-attf-class="fa fas fa-lg   fa-exclamation-triangle {{   'text-danger' if s and s['code'] =='t' else 'text-warning'}}"/>
+                                                
+                                                <sub t-esc="'\n'.join([anomalie['message'] for anomalie in pl.value.anomalies])"/>
+                                                <t t-set="anomalie" t-value="True"/>
+                                            </span>
+                                        
+                                    </td>
+                                    <!-- <t t-set="heures_pause" t-value="not anomalie and employee.x_pause and datetime.timedelta(hours=1) or ((pause[-1:].punch_time.replace(second=0) - pause[:1].punch_time.replace(second=0)) if len(pause)&gt;=2 else datetime.timedelta(hours=1) if pause or restau else datetime.timedelta())"/><t t-set="heures" t-value="not anomalie and ((clean_punches[-1:].punch_time.replace(second=0) - roundTo30(clean_punches[:1].punch_time,mode='proche').replace(second=0)) if clean_punches else datetime.timedelta()) - heures_pause"/><t t-set="heures25" t-value="not anomalie and ((roundTo20(clean_punches[-1:].punch_time).replace(second=0) - roundTo30(clean_punches[:1].punch_time,mode='proche').replace(second=0)) if clean_punches else datetime.timedelta()) - heures_pause"/> -->
+                                    <td>
+                                        <b t-if="pl.value.heures" t-esc="f'{pl.value.heures}'[:-3:]"/>
+                                        <!-- <span t-if="not anomalie and heures&gt;datetime.timedelta()"><t t-set="total_normal" t-value="total_normal + heures"/></span> -->
+                                    </td>
+                                    <td>
+                                        <n class="text-success" t-if="pl.value.heures" t-esc="f'{pl.value.heures25}'[:-3:]"/>
+                                        <!-- <span t-if="not anomalie and heures25&gt;datetime.timedelta()"><t t-set="total_normal2" t-value="total_normal2 + heures25"/></span> -->
+                                    </td>
+                                    <td>
+                                        <t t-if="pl.value.heures_pause" t-esc="f'{pl.value.heures_pause}'[:-3:]"/>
+                                        <!-- <span><t t-set="total_pause" t-value="total_pause + heures_pause"/></span> -->
+                                    </td>
+                                    <!-- <t t-set="hs" t-value="- heures_pause +  heures  - (heures_pause or datetime.timedelta(days=0,hours=0)) - datetime.timedelta(days=0,hours=8) if heures else datetime.timedelta()"/><t t-set="hs25" t-value="- heures_pause + heures25  - ((employee.x_pause and -1 or 1) * heures_pause or datetime.timedelta(days=0,hours=0)) - datetime.timedelta(days=0,hours=8) if heures else datetime.timedelta()"/> -->
+                                    <td>
+                                        <span t-if="pl.value.abs25" t-esc="f'{pl.value.abs25}'[:-3]"/>
+                                        <!-- <t t-if="hs25&lt;datetime.timedelta()"><t t-set="total_abs" t-value="total_abs + hs25"/></t> -->
+                                    </td>
+                                    <td>
+                                        <span t-if="pl.value.hs" t-esc="f'{pl.value.hs}'[:-3]"/>
+                                        <!-- <t t-if="hs&gt;datetime.timedelta() and not (is_holiday or is_conge) or worked_day%7 == 0"><t t-set="total_hs" t-value="total_hs + hs"/></t> -->
+                                    </td>
+                                    <td>
+                                        <span t-if="pl.value.hs25" t-esc="f'{pl.value.hs25}'[:-3]"/>
+                                        <!-- <t t-if="hs&gt;datetime.timedelta() and not (is_holiday or is_conge) or worked_day%7 == 0"><span t-esc="f'{abs(hs25)}'[:-3]"/><t t-set="total_hs_corrige" t-value="total_hs_corrige + hs25"/></t> -->
+                                    </td>
+                                    <td>
+                                        <span t-if="pl.value.jr.x_hs_corrige" t-esc="f'{pl.value.jr.x_hs_corrige}'"/>
+                                        <!-- <t t-set="total_hs_declare" t-value="total_hs_declare + datetime.timedelta(hours=jr.x_hs_corrige)"/> -->
+                                    </td>
+                                    <td>
+                                        <t>
+                                            <i t-if="not pl.value.jr.x_circuit" class="fa fa-check text-muted"/>
+                                            <i t-if="pl.value.jr.x_circuit" class="fa fa-check-circle  text-danger" t-att-title="f'Mise en circuit\n{pl.value.jr.x_circuit}'"/>
+                                            <i t-if="not pl.value.jr.x_validation_1" class="fa fa-check text-muted"/>
+                                            <i t-if="pl.value.jr.x_validation_1" class="fa fa-check-circle  text-primary" t-att-title="f'Validation 2\n{pl.value.jr.x_date_1}'"/>
+                                            <i t-if="not pl.value.jr.x_validation_2" class="fa fa-check text-muted"/>
+                                            <i t-if="pl.value.jr.x_validation_2" class="fa fa-check-circle  text-success" t-att-title="f'Validation 1\n{pl.value.jr.x_date_2}'"/>
+                                            <button t-if="not pl.value.jr.x_circuit" class="btn btn-sm btn-success" t-att-data-hs="pl.value.hs25.total_seconds()" data-action="add_jour_repos" t-att-data-empid="emp_zkid" t-att-data-curdate="pl.jour">
+                                                <i class="fa fa-arrow-right"/>
+                                            </button>
+                                        </t>
+                                    </td>
+                                    <td>
+                                        <!-- <t tt-if="hs&gt;datetime.timedelta() and not (is_holiday or is_conge) or worked_day%7 == 0"> -->
+                                        <span t-esc="datetime.timedelta(hours=pl.value.jr.x_hs_25) or '' "/>
+                                        <!-- span t-esc="datetime.timedelta(hours=jr.x_hs_25)  or f'{abs(hs25)}'[:-3]"/> -->
+                                        <!-- <t t-set="total_hs25" t-value="total_hs25 + datetime.timedelta(hours=jr.x_hs_25) "/></t> -->
+                                    </td>
+                                    <td>
+                                        <t t-esc=" pl.value.jr.x_hs_50 and datetime.timedelta(hours=pl.value.jr.x_hs_50) or pl.value.hs50  or'' "/>
+                                        <!-- <t t-set="total_hs50" t-value="total_hs50 + datetime.timedelta(hours=jr.x_hs_50) "/> -->
+                                    </td>
+                                    <td>
+                                        <t t-esc="datetime.timedelta(hours=pl.value.jr.x_hs_100) or ''"/>
+                                        <!-- <t t-set="total_hs100" t-value="total_hs100 + datetime.timedelta(hours=jr.x_hs_100) "/> -->
+                                    </td>
+                                    <td>
+                                        <t t-raw="conge"/>
+                                        <button t-if="not (pl.value.is_conge  or pl.value.all_punches)" class="btn btn-sm btn-muted" data-action="add_leave" t-att-data-empid="employee.barcode" t-att-data-curdate="pl.jour">
+                                            <i class="fa fa-plus fa-large"/>
+                                        </button>
+                                    </td>
+                                    <td>
+                                        <t t-raw="holiday"/>
+                                    </td>
+                                    <td>
+                                        <t t-if="pl.value.jr.x_jour_repos">
+                                            <button class="btn btn-sm btn-success" data-action="add_jour_repos" data-mode="remove" t-att-data-empid="emp_zkid" t-att-data-curdate="pl.jour">
+                                                <i class="fa fa-trash"/>
+                                            </button>
+                                        </t>
+                                        <t t-else="">
+                                            <button class="btn btn-sm btn-muted" data-action="add_jour_repos" data-mode="add" t-att-data-empid="emp_zkid" t-att-data-curdate="pl.jour">
+                                                <i class="fa fa-plus"/>
+                                            </button>
+                                        </t>
+                                    </td>
+                                </tr>
+                                <tr t-else="" t-att-class="'table-active' if pl.jour.weekday()==6 else ''">
+                                    <!--
+                                    <t t-set="jr_absence" t-value="jr_absence+1"/><t t-set="worked_day" t-value="0"/>
+                                    -->
+                                    <td>
+                                        <span t-esc="format_date(pl.jour)"/>
+                                    </td>
+                                    <th colspan="">
+                                        <span t-esc="pl.jour.strftime('%d/%m/%Y')"/>
+                                    </th>
+                                    <td colspan="14">
+                                        <div class="toggleButtons ">
+                                            <t t-if="not pl.value.is_holiday">Aucune</t>
+                                            <div t-attf-class="d-inline  btns  d-none mt-2"/></div>
+                                    </td>
+                                    <td>
+                                        <t t-raw="conge"/>
+                                        <button t-if="not (pl.value.is_conge  or pl.value.all_punches)" class="btn btn-sm btn-muted" data-action="add_leave" t-att-data-empid="employee.barcode" t-att-data-curdate="pl.jour">
+                                            <i class="fa fa-plus fa-large"/>
+                                        </button>
+                                    </td>
+                                    <td>
+                                        <t t-raw="holiday"/>
+                                    </td>
+                                    <td>
+                                        <t t-if="pl.value.jr.x_jour_repos">
+                                            <button class="btn btn-sm btn-success" data-action="add_jour_repos" data-mode="remove" t-att-data-empid="emp_zkid" t-att-data-curdate="pl.jour">
+                                                <i class="fa fa-trash"/>
+                                            </button>
+                                        </t>
+                                        <t t-else="">
+                                            <button class="btn btn-sm btn-muted" data-action="add_jour_repos" data-mode="add" t-att-data-empid="emp_zkid" t-att-data-curdate="pl.jour">
+                                                <i class="fa fa-plus"/>
+                                            </button>
+                                        </t>
+                                    </td>
+                                    <td colspan="3333"/>
+                                </tr>
+                            </t>
+                        </t>
+                    </tbody>
+                    <tfoot class="position-sticky sticky-bottom  bg-primary">
+                        <tr class="bg-muted">
+                            <th colspan="2">
+                                <span t-esc="len(pgroupeds)"/> Jours
+                                
+                                
+                                
+                                
+                                
+                            
+                            
+                            
+                            
+                            
+                            
+                            </th>
+                            <th> Présence 
+                                    
+                                    
+                                    
+                                    
+                                    
+                                
+                                
+                                
+                                
+                                
+                                
+                                <t t-esc="jr_presence"/>
+                            </th>
+                            <th> Absence 
+                                    
+                                    
+                                    
+                                    
+                                    
+                                
+                                
+                                
+                                
+                                
+                                
+                                <t t-esc="jr_absence"/>
+                            </th>
+                            <th/>
+                            <th>
+                                <t t-esc="total_normal.total_seconds()/3600" t-options="{'widget':'float','precision':2}"/>
+                            </th>
+                            <th>
+                                <t t-esc="total_normal2.total_seconds()/3600" t-options="{'widget':'float','precision':2}"/>
+                            </th>
+                            <th>
+                                <t t-esc="total_pause.total_seconds()/3600" t-options="{'widget':'float','precision':2}"/>
+                            </th>
+                            <th>
+                                <t t-esc="total_abs.total_seconds()/3600" t-options="{'widget':'float','precision':2}"/>
+                            </th>
+                            <th>
+                                <t t-esc="total_hs.total_seconds()/3600" t-options="{'widget':'float','precision':2}"/>
+                            </th>
+                            <th>
+                                <t t-esc="total_hs_corrige.total_seconds()/3600" t-options="{'widget':'float','precision':2}"/>
+                            </th>
+                            <th>
+                                <t t-esc="total_hs_declare.total_seconds()/3600" t-options="{'widget':'float','precision':2}"/>
+                            </th>
+                            <th/>
+                            <th>
+                                <t t-esc="total_hs25.total_seconds()/3600" t-options="{'widget':'float','precision':2}"/>
+                            </th>
+                            <th>
+                                <t t-esc="total_hs50.total_seconds()/3600" t-options="{'widget':'float','precision':2}"/>
+                            </th>
+                            <th>
+                                <t t-esc="total_hs100.total_seconds()/3600" t-options="{'widget':'float','precision':2}"/>
+                            </th>
+                            <th>
+                                <t t-esc="total_conge.total_seconds()/3600" t-options="{'widget':'float','precision':2}"/>
+                            </th>
+                            <th>
+                                <t t-esc="total_jf.total_seconds()/3600" t-options="{'widget':'float','precision':2}"/>
+                            </th>
+                            <th>
+                                <t t-esc="total_jr.total_seconds()/3600" t-options="{'widget':'float','precision':2}"/>
+                            </th>
+                        </tr>
+                    </tfoot>
+                </table>
+            </div>
+        </div>
+    </t>
+    </template>
+
+    <!-- mc2, vue 2700 -->
+    <template id="portal_magasin" name="portal_magasin">
+    <t t-set="no_header" t-value="True"/>
+    <t t-set="no_menu" t-value="True"/>
+    <t t-set="no_footer" t-value="True"/>
+    <t t-set="full_width" t-value="True"/>
+    <t t-set="title" t-value="'Magasin MPR :: Derniers Pointage'"/>
+    <t t-call="website.layout">
+        
+        <div class="m-0 p-0 d-flex  ">
+           <div id="leftBar" class="left-bar bg-300 p-2 ">
+                <div class="  position-sticky sticky-top  vh-100 ">
+                    <header class="bg-100 m-0 p-0 ">
+                      <img src="/logo" class="w-100"/>
+                        <div class="m-0 p-5 position-sticky "> 
+                            <h2 style="white-space:nowrap; color:darkblue">Magasin MPR</h2>
+                            <h4 style="color:tomato">🕓 Dernièrs pointages</h4>
+                        </div>
+                    </header>
+                
+                    <form action="/my/magasin">
+                            
+                            <input t-attf-value="{{matricule}}" name="matricule" type="number" class="form-control form-sm mt-2" placeholder="Matricule .."/>
+                            De : <input name="date_from" t-attf-value="{{date_from}}" type="datetime-local" class="form-control form-sm mt-2" placeholder="Date de : .."/>
+                            A: <input name="date_to" t-attf-value="{{date_to}}" type="datetime-local" class="form-control form-sm mt-2" placeholder="Date à: .."/>
+                            <button class="btn btn-primary mt-2" type="submit">Chercher🔎</button>   
+
+
+                    </form>   
+                
+                     <div class="p-2 bg-o-color-1 text-center  fixed-bottom">
+                            <a t-if="prev" t-att-href="f'/my/magasin'" id="up" class="btn btn-outline-secondary btn-sm me-1 ">
+                                <i class="fa fa-chevron-up"/>  Premier
+                            </a>
+                            <t t-esc="page"/>
+                            <a t-if="prev" t-att-href="f'/my/magasin/{page-1}'" id="prev" class="btn btn-outline-secondary btn-sm me-1 ">
+                                <i class="fa fa-chevron-left"/>  précédent
+                            </a>
+                            <a t-if="next" t-att-href="f'/my/magasin/{page+1}'" id="next" class="btn btn-outline-secondary btn-sm">suivant 
+                                <i class="fa fa-chevron-right"/>
+                            </a> 
+                    </div>
+                </div>
+            </div>
+                <div id="rightBar" class="central-bar">
+                     
+                  
+                <table class="mt-2 table table-bordered ">
+                    <thead class="bg-600 sticky-top ">
+                      <tr>
+                        <th>Code Employé </th>
+                       <th>QR Code</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <t t-foreach="punches" t-as="p">
+                        <tr>
+                            <td class="p-5" style="border:solid 1px;border-radius:5px">
+                                <img style="float:right" t-att-src="'data:image/png;base64,%s' % p['qr_code']" width="120"/>
+                                <h2 style="color:darkblue" t-esc="p['emp_name'].replace(' None','')"/>
+                                <t t-set="punch" t-value="datetime.datetime.strptime(p['punch_time'],'%Y-%m-%d %H:%M:%S')"/>
+                                <h3 t-esc="datetime.datetime.strftime(punch,'%Y-%m-%d')"/>
+                                <h2 style="color:RED" t-esc="punch.strftime('%H:%M:%S')"/>
+            
+                            </td>
+                            <td class="p-5" style="border:solid 1px;border-radius:5px">
+                    <img class="m-2 p-2" t-att-src="f'/report/barcode/Code128/{p['emp_code']}?width=400&amp;height=200&amp;humanreadable=1&amp;margin=0&amp;quiet=1'"/>
+                      </td>
+                        </tr>
+                      </t>
+                    </tbody>
+              </table>
+              <script t-if="page==1"> 
+               
+              setTimeout(() =&gt; window.location.reload(), 30000); // refresh every 30s
+             
+            </script>
+            
+             </div>
+                </div>
+            
+            </t>
+    </template>
+
+    <!-- mc2, vue 2701 -->
+    <template id="portal_attendance_anomalie_template" name="Anomalies view" customize_show="True">
+    <!-- Hide portal header/footer/menu -->
+    <t t-set="no_header" t-value="True"/>
+    <t t-set="no_menu" t-value="True"/>
+    <t t-set="no_footer" t-value="True"/>
+    <t t-set="full_width" t-value="True"/>
+    <t t-set="breadcrumbs_searchbar" t-value="True"/>
+    <t t-set="searchbar_inputs" t-value="[]"/>
+    <!-- Use lightweight layout -->
+    <t t-lang="fr_FR" t-call="portal.portal_layout">
+        <nav class=" navbar navbar-expand-lg navbar-light bg-light justify-content-between">
+                            
+
+            <a class="navbar-brand" href="#">
+                <img src="/logo" height="40" class="d-inline-block align-top" alt=""/>
+                <span>Gestion des anomalies</span>
+            </a>
+            
+            
+        
+                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"/>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                    <ul class="navbar-nav mr-auto">
+                        <li class="nav-item active">
+                            <a class="nav-link" href="/my">Home</a>
+                        </li>
+                        <!--
+                        <li class="nav-item">
+                            <a class="nav-link" t-att-href="f'/my/attendance/get_anomalie?start_day={end_day}'">Toutes les anomalies</a>
+                        </li>
+                        
+                      <li class="nav-item dropdown"><a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                          Dropdown
+                        </a><div class="dropdown-menu" aria-labelledby="navbarDropdown"><a class="dropdown-item" href="#">Action</a><a class="dropdown-item" href="#">Another action</a><div class="dropdown-divider"/><a class="dropdown-item" href="#">Something else here</a></div></li><li class="nav-item"><a class="nav-link disabled" href="#">Disabled</a></li>
+                      -->
+                    </ul>
+                </div>
+            
+            
+            <div class="nav flex-column flex-sm-row gap-2 ms-auto p-0 mb-3 mb-lg-0 mt-1 mt-lg-0">
+                <form classs="form-inline o_portal_search_panel ">
+                    <div class="input-group w-100">
+                        <input type="date" class="form-control border-0 " placeholder="Rechercher" t-att-value="start_day" name="start_day"/>
+                        <input type="date" class="form-control border-0 " placeholder="Rechercher" t-att-value="end_day" name="end_day"/>
+                        <button class="btn btn-outline-primary" type="submit">
+                            <span class="oi oi-search"/>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </nav>
+        <t t-if="not portal_punches">
+            <p class="alert alert-warning">Il n'y a pas de pointage pour la recherche encours</p>
+        </t>
+        <div class=" p-2 " id="AnomalieTableWrapper">
+            <button id="exportCSV">Export CSV</button>
+            <!-- Filters  WWWWW-->
+            <t class="d-flex flex-direction-row">
+                <t t-set="employee" t-value="request.env['hr.employee'].search([('barcode','=',emp_id)])"/>
+                <t t-set="emp_zkid" t-value="employee.zk_id"/></t>
+            <div class=" d-flex flex-direction-row">
+
+                <!-- Punches Table -->
+                <div class=" ml32 col" style="height: 90vh; overflow-y: auto;">
+                     
+                        <div class="float-end" style="display:flex; justify-content:space-between">
+                            <div>
+                                <label>Rows per page:</label>
+                                <select id="page_size">
+                                    <option value="10">10</option>
+                                    <option value="25">25</option>
+                                    <option value="50">50</option>
+                                    <option value="100">100</option>
+                                    <option value="-1">All</option>
+                                </select>
+                                <div id="pager" class="pagination float-end"/></div>
+                        </div>
+                 
+                    <table id="myTable" data-to-export="true" class="table table-striped table-sm table-hover sortable">
+                        <colgroup>
+                            <col span="10" class="border"/>
+                        </colgroup>
+                        <thead class="table-light position-sticky sticky-top">
+                            <tr>
+                                <th>
+                                    <button class="btn btn-sm btn-outline-secondary sort-btn">↕</button>
+                                    <button class="btn btn-sm btn-outline-primary filter-btn">🔍</button>
+                                    <input class="col-filter d-none" placeholder="Filter lignes"/>
+                                </th>
+                                <th data-sort="text"> Date
+                                    
+                                    
+                                    
+                                    
+                                    <button class="btn btn-sm btn-outline-secondary sort-btn">↕</button>
+                                    <button class="btn btn-sm btn-outline-primary filter-btn">🔍</button>
+                                    <input type="date" class="col-filter d-none" placeholder="Filter Date"/>
+                                </th>
+                                <th data-sort="number">Mat.
+                                    
+                                    
+                                    
+                                    
+                                    <button class="btn btn-sm btn-outline-secondary sort-btn">↕</button>
+                                    <button class="btn btn-sm btn-outline-primary filter-btn">🔍</button>
+                                    <input type="number" class="col-filter d-none" placeholder="Filter Matricule"/>
+                                </th>
+                                <th data-sort="text">Nom
+                                    
+                                    
+                                    
+                                    
+                                    <button class="btn btn-sm btn-outline-secondary sort-btn">↕</button>
+                                    <button class="btn btn-sm btn-outline-primary filter-btn">🔍</button>
+                                    <input class="col-filter d-none" placeholder="Filter Nom"/>
+                                </th>
+                                <th data-sort="text">Anomalie
+                                    
+                                    
+                                    
+                                    
+                                    <button class="btn btn-sm btn-outline-secondary sort-btn">↕</button>
+                                    <button class="btn btn-sm btn-outline-primary filter-btn">🔍</button>
+                                    <select class="col-filter d-none" placeholder="Filter Anomalie">
+                                        <option value="-" selected="">Tous</option>
+                                        <option value="Pointage impaire">Pointage impaire</option>
+                                        <option value="Détecté présent">Détecté présent</option>
+                                        <option value="Porte impaire">Porte impaire</option>
+                                        <option value="Absent">Absent</option>
+                                        <option value="Aucune anomalie">Aucune anomalie</option>
+                                    </select>
+                                </th>
+                                <th>presence</th>
+                                <th>restau. </th>
+                                <th>Porte. </th>
+                                <th> </th>
+                            </tr>
+                            <!--
+                        
+                            <tr class="column-filters"><th><input class="col-filter"/></th><th><input class="col-filter"/></th><th><input class="col-filter"/></th><th><input class="col-filter"/></th><th><input class="col-filter"/></th><th><input class="col-filter"/></th></tr>
+                            -->
+                        </thead>
+                        <tbody id="punches_table_body">
+                            <t t-set="Normalized" t-value="lambda x:sorted(list(set(x.mapped(lambda x:x.punch_time and x.punch_time.strftime('%H:%M') or '####'))))"/>
+                            <t t-set="showPunches" t-value="lambda x:' - '.join(Normalized(x))"/>
+                            <t t-foreach="sorted(portal_punches.items())" t-as="pp">
+                                <t t-set="day" t-value="pp[0]"/>
+                                <t t-set="pEmps" t-value="pp[1]"/>
+                                <tr t-foreach="sorted(pEmps.items(),key=lambda x:x[0].barcode.zfill(10))" t-as="pEmp">
+                                    <td>
+                                        <t t-esc="pEmp_index"/>
+                                    </td>
+                                    <t t-set="Emp" t-value="pEmp[0]"/>
+                                    <t t-set="Punches" t-value="pEmp[1]"/>
+                                    <td>
+                                        <span t-esc="day"/>
+                                    </td>
+                                    <td>
+                                        <span class="test-right" t-esc="Emp.barcode"/>
+                                    </td>
+                                    <td>
+                                        <span t-esc="Emp.name"/>
+                                    </td>
+                                    <td>
+                                        <t t-set="presence" t-value="Normalized(Punches.filtered(lambda x:x.usage=='t' or not x.terminal_id))"/>
+                                        <t t-set="restau" t-value="Normalized(Punches.filtered(lambda x:x.usage=='r' ))"/>
+                                        <t t-set="porte" t-value="Normalized(Punches.filtered(lambda x:x.usage=='p' ))"/>
+                                        
+                                        <t t-set="presence_impaire" t-value="len(presence)%2&gt;0"/>
+                                        <t t-set="porte_impaire" t-value="len(porte)%2&gt;0"/>
+                                        <t t-set="detecte_present" t-value="not presence and (restau or porte)"/>
+                                        <t t-set="absente" t-value="not Punches"/>
+                                        
+                                        <p t-if="absente">Absent</p>
+                                        <p t-if="presence_impaire">Pointage impaire</p>
+                                        <p t-if="detecte_present">Détecté présent</p>
+                                        <p t-if="porte_impaire">Porte impaire</p>
+                                        <p t-if="not(porte_impaire or detecte_present or presence_impaire or absente)">Aucune anomalie</p>
+
+                                    </td>
+                                    <td>
+                                        <span t-esc="showPunches(Punches.filtered(lambda x:x.usage=='t' or not x.terminal_id))"/>
+                                    </td>
+                                    <td>
+                                        <span t-esc="showPunches(Punches.filtered(lambda x:x.usage=='r' ))"/>
+                                    </td>
+                                    <td>
+                                        <span t-esc="showPunches(Punches.filtered(lambda x:x.usage=='p' ))"/>
+                                    </td>
+                                    <td>
+                                        <a class="btn btn-success rounded-1" t-att-href="f'/my/attendance/get_punch_stacked/{Emp.barcode}?start_day={day+datetime.timedelta(days=-1)}&amp;end_day={day+datetime.timedelta(days=1)}'" target="blank">
+                                            <i class="bi bi-list-check"/>
+                                        </a>
+                                    </td>
+                                    <td/>
+                                </tr>
+                            </t>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </t>
+    </template>
+
+    <!-- mc2, vue 2702 -->
+    <template id="portal_validation_heures_supp" name="Validation des heures supp" customize_show="True">
+    <!-- Hide portal header/footer/menu -->
+    <t t-set="no_header" t-value="True"/>
+    <t t-set="no_menu" t-value="True"/>
+    <t t-set="no_footer" t-value="True"/>
+    <t t-set="full_width" t-value="True"/>
+    <t t-set="breadcrumbs_searchbar" t-value="True"/>
+    <t t-set="searchbar_inputs" t-value="[]"/>
+    <!-- Use lightweight layout -->
+    <t t-lang="fr_FR" t-call="portal.portal_layout">
+        <t>
+            <t t-esc="department_ids"/>
+            <nav class="  navbar navbar-expand-lg navbar-light bg-light justify-content-between">
+                <a class="navbar-brand" href="#">
+                    <img src="/logo" height="40" class="d-inline-block align-top" alt=""/>
+                    <span>Pointage/employé</span>
+                </a>
+                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarSupportedContent" aria-controls="navbarSupportedContent" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"/>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarSupportedContent">
+                    <ul class="navbar-nav mr-auto">
+                        <li class="nav-item active">
+                            <a class="nav-link" href="/my">Home</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" t-att-href="f'/my/attendance/get_anomalie?start_day={end_day}'">Toutes les anomalies</a>
+                        </li>
+                        <!--
+                      <li class="nav-item dropdown"><a class="nav-link dropdown-toggle" href="#" id="navbarDropdown" role="button" data-toggle="dropdown" aria-haspopup="true" aria-expanded="false">
+                          Dropdown
+                        </a><div class="dropdown-menu" aria-labelledby="navbarDropdown"><a class="dropdown-item" href="#">Action</a><a class="dropdown-item" href="#">Another action</a><div class="dropdown-divider"/><a class="dropdown-item" href="#">Something else here</a></div></li><li class="nav-item"><a class="nav-link disabled" href="#">Disabled</a></li>
+                      -->
+                    </ul>
+                </div>
+                <div class="nav flex-column flex-sm-row gap-2 ms-auto p-0 mb-3 mb-lg-0 mt-1 mt-lg-0">
+                    <form classs="form-inline o_portal_search_panel ">
+                        <!--
+                    <div class="input-group w-100"><input type="date" class="form-control border-0 " placeholder="Rechercher" t-att-value="start_day" name="start_day"/><input type="date" class="form-control border-0 " placeholder="Rechercher" t-att-value="end_day" name="end_day"/><button class="btn btn-outline-primary" type="submit"><span class="oi oi-search"/></button></div>
+                    -->
+                        <div class="input-group w-100">
+                            <!-- <t t-set="employee" t-value="request.env['hr.employee'].search([('barcode','=',emp_id)])"/> -->
+                            <!-- <t t-set="emp_zkid" t-value="employee.zk_id"/> -->
+                            <h3 t-esc="f'{emp_id}'"/>
+                            <span class="btn btn-sm" data-bs-toggle="collapse" data-bs-target="#emp_params" aria-bs-expanded="false" aria-controls="emp_params">
+                                <i class="fa fa-lg fa-gear"/>
+                            </span>
+                        </div>
+                    </form>
+                </div>
+            </nav>
+            <div id="emp_params" class=" collapse navbar navbar-light bg-light justify-content-between ">
+                <div class="col-6 offset-6" groups="ss">
+                    <form action="/my/employee/update" method="POST">
+                        <input type="hidden" name="terminal_ids" t-att-value="','.join(map(str,terminal_ids))"/>
+                        <input type="hidden" name="emp_id" t-att-value="emp_id"/>
+                        <input type="hidden" name="start_date" t-att-value="start_date"/>
+                        <input type="hidden" name="end_date" t-att-value="end_date"/>
+                        
+                        <div class="form-control">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="pauseCheckBox" name="x_pause" t-att-value="employee.x_pause" t-att-checked="employee.x_pause and 'checked' or None"/>
+                                <input type="hidden" name="x_pause" value=""/>
+                                <label class="form-check-label" for="pauseCheckBox">
+                                    Pause automatique ?
+                                  </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="HeureSupp" name="x_heure_supp" t-att-value="employee.x_heure_supp" t-att-checked="employee.x_heure_supp and 'checked' or None"/>
+                                <input type="hidden" name="x_heure_supp" value=""/>
+                                <label class="form-check-label" for="HeureSupp">
+                                    Heure supplèmentaire ?
+                                  </label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="IgnoreUHF" name="x_ignore_uhf" t-att-value="employee.x_ignore_uhf" t-att-checked="employee.x_ignore_uhf and 'checked' or None"/>
+                                <input type="hidden" name="x_ignore_uhf" value=""/>
+                                <label class="form-check-label" for="IgnoreUHF">
+                                    Ignorer Pointage UHF ?
+                                  </label>
+                            </div>
+                            
+                            <div class="form-row">
+                                <div class="form-group">
+                                    <label class="form-label" for="horaire">
+                                    Haraire
+                                  </label>
+                                    <select class="form-control" type="select" id="horaire" name="x_horaire">
+                                        <option value="normal" t-att-selected="employee.x_horaire =='normal'">Normal</option>
+                                        <option value="poste" t-att-selected="employee.x_horaire =='poste'">Postier</option>
+                                        <option value="securite" t-att-selected="employee.x_horaire =='securite'">Agent de sécurité</option>
+                                    </select>
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label" for="NombreHeure">
+                                   Nombre  d'heures par jour:
+                                  </label>
+                                    <input class="form-control" id="NombreHeure" type="number" name="x_day_hour" t-att-value="employee.x_day_hour or 8"/>
+                                </div>
+                            </div>
+                            <input type="hidden" name="employee_id" t-att-value="employee.id"/>
+                            <button class="btn btn-primary" type="submit">Valide</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+            <!-- Jours fériers -->
+            <!-- <t t-set="jf" t-value="request.env['resource.calendar.leaves'].search([('resource_id','=',False),'|','&amp;',('date_from','&gt;=',start_day.strftime('%Y-%m-%d')),('date_from','&lt;=',end_day.strftime('%Y-%m-%d')),'&amp;',('date_to','&gt;=',start_day.strftime('%Y-%m-%d')),('date_to','&lt;=',end_day.strftime('%Y-%m-%d'))])"/> --></t>
+        <!-- Filters  WWWWW-->
+        <div id="hs-validation" class=" d-flex flex-direction-row">
+            <div id="sidebar1" t-attf-class="bg-300  bg-primary collapse col-2 vh-100 p-2 {{'show' if not portal_punches else ''}}">
+                <div id="" class=" mb-3 d-flex flex-column ">
+                    <div class="m-2">
+                        <label>Employé</label>
+                        <input id="input_employee" class="form-control form-control-sm"/>
+                        <select id="filter_employee" class="form-select form-select-sm">
+                            <t t-foreach="request.env['hr.employee'].search([('barcode','=like','__%'),'!',('barcode','=like','9999%')]).sorted(lambda x:x.barcode.zfill(9))" t-as="emp">
+                                <option t-att-value="emp.barcode" t-esc="f'{emp.barcode}- {emp.name}'" t-att-selected="emp.barcode == f'{emp_id}'"/>
+                            </t>
+                        </select>
+                    </div>
+                    <div class="mb-2">
+                        <label>Terminal</label>
+                        <select style="height:200px" id="filter_department" class="form-select form-select-sm" multiple="1">
+
+                                    <option t-foreach="departments" t-as="term" t-att-value="term.id" t-esc="term.name" t-att-selected="  term.id in (department_ids or []) if department_ids else False"/>
+                            
+                        </select>
+                    </div>
+                    <div class="mb-2">
+                        <label>De :</label>
+                        <input type="date" id="filter_from" class="form-control form-control-sm" t-att-value="start_day"/>
+                    </div>
+                    <div class="mb-2">
+                        <label>A: </label>
+                        <input type="date" id="filter_to" class="form-control form-control-sm" t-att-value="end_day "/>
+                    </div>
+                    <div class=" mb-2 ">
+                        <button id="filter_btn" class="btn btn-primary btn-sm w-100">Filter / Refresh</button>
+                    </div>
+                </div>
+            </div>
+            <!-- Punches Table -->
+            <div class="  ml8 col" style="height: 90vh; overflow-y: auto;">
+                <div class="  mt-1">
+                    <button class="btn btn- " data-bs-toggle="collapse" data-bs-target="#sidebar1" aria-bs-expanded="false" aria-controls="sidebar">
+                        <i class="oi oi-panel-right"/>
+                    </button>
+                    <button class="btn btn-sm  btn-warning rounded-1" data-action="add_leave" data-empid="263" data-curdate="2025-11-05">
+                        <i class="fa fa-file-text"/> Congé    
+                    </button>
+                    <button class="btn btn-sm  btn-success rounded-1" data-action="add_punch" t-att-data-id="" t-att-data-empid="emp_id" t-att-data-curdate="start_day">
+                        <i class="fa fa-plus"/>Ajouter   
+                    
+                    </button>
+                    <button class="btn  btn-sm  btn-success rounded-1" data-action="add_punch" t-att-data-id="" t-att-data-empid="emp_id" t-att-data-curdate="start_day">
+                        <i class="fa fa-rocket"/>Raffraichir    
+                    
+                    </button>
+                    
+                    <button class="btn btn-danger btn-sm" data-action="bulk_delete" disable="">
+                      Supprimer sélection
+                  </button>
+              
+                  <button class="btn btn-warning btn-sm" data-action="bulk_export" disabled="">
+                      Export sélection
+                  </button>
+                </div>
+                <t>
+                    <p t-if="jf" t-attf-class="alert alert-success alert-dismissible fade show text-center m-1" role="alert">
+                        <t t-foreach="jf" t-as="x">
+                            <t t-esc="f' {x.name} '"/>
+                            <t t-esc="f'{x.date_from.date()} - {x.date_to.date()}  '"/></t>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"/>
+                    </p>
+                    <p t-if="request.params.get('message')" class="alert alert-warning alert-dismissible fade show  m-1  text-center">
+                        <strong t-esc="request.params.get('message')"/>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"/>
+                    </p>
+                    <p t-if="not portal_punches" class="alert alert-warning alert-dismissible fade show  m-1  text-center">
+                        <strong>Il n'y a pas de pointage pour la recherche encours   </strong>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"/>
+                    </p>
+                </t>
+                <table class="table table-striped table-sm table-hover sortable mt-1">
+                    <colgroup>
+                        <col span="5" class="border"/>
+                        <col span="2"/>
+                        <col span="999" class="border"/>
+                    </colgroup>
+                    <thead class="table-light  position-sticky sticky-top">
+                        <tr>
+                            <th rowspan="2">
+                                <input type="checkbox" name="x_jour_repos" id="select_all"/>
+                                
+                         </th>
+                            <th rowspan="2">Date</th>
+                            <th rowspan="2" colspan="2">employee</th>
+                            <th rowspan="2">JR </th>
+                            <th rowspan="2">Heures </th>
+                            <th colspan="5">Heure Supp</th>
+                            <th rowspan="2">Circuit</th>
+                            <th colspan="2">Validation 1</th>
+                            <th colspan="2">Validation 2</th>
+                        </tr>
+                        <tr>
+                            <th colspan="">HS</th>
+                            <th colspan="">Déclaré</th>
+                            <th>25%</th>
+                            <th>50%</th>
+                            <th>100%</th>
+                            <th>par:</th>
+                            <th>le:</th>
+                            <th>par:</th>
+                            <th>le:</th>
+                        </tr>
+                    </thead>
+                    <tbody id="punches_table_body">
+                        <tr t-foreach="portal_punches" t-as="pl" t-att-data-id="pl.id">
+                        <form>
+                            <td class="row-select">
+                                <input class="row-select" data-id="pl.id" type="checkbox" name="x_jour_repos"/>
+                                
+                          </td>
+                            <td><span t-esc="pl.x_date"/></td>
+                            <td><span t-esc="pl.x_employee_id.barcode"/></td>
+                            <td><span t-esc="pl.x_employee_id.name"/></td>
+                            
+                            <td>
+                                <input type="checkbox" name="x_jour_repos" t-att-checked="pl.x_jour_repos"/>
+                                
+                          </td>
+                            
+                            
+                            <td><span t-esc="pl.x_heures"/></td>
+                            <td><span t-esc="pl.x_hs"/></td>
+                            <td>
+                            <span t-esc="pl.x_hs_corrige"/>
+                            </td>
+                            <td><span t-esc="pl.x_hs_25"/></td>
+                            <td><span t-esc="pl.x_hs_50"/></td>
+                            <td><span t-esc="pl.x_hs_100"/></td>
+                            <td>
+                                <button t-att-disabled="pl.x_validation_1 or pl.x_validation_2" t-if="not pl.x_circuit" data-action="circuit_add">
+                                    <i class="fa fa-play"/>
+                                </button>
+                                <button t-att-disabled="pl.x_validation_1 or pl.x_validation_2" t-if=" pl.x_circuit" data-action="circuit_cancel">
+                                    <i class="fa fa-pause"/>
+                                </button>
+                                <span t-esc="pl.x_circuit"/>
+                            </td>
+                            <td><span t-esc="pl.x_validation_1"/></td>
+                            <td><span t-esc="pl.x_date_1"/></td>
+                            <td><span t-esc="pl.x_validation_2"/></td>
+                            <td><span t-esc="pl.x_date_2"/></td>
+                            <td><button type="submit"/></td>
+                        </form>
+                        </tr>
+                    </tbody>
+                    
+                </table>
+            </div>
+        </div>
+    </t>
+    </template>
+</odoo>

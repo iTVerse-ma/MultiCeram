@@ -1,0 +1,177 @@
+<odoo>
+  <data>
+
+      <!-- Report template -->
+  <template id="report_transaction_report_document">
+    <t t-set="full_width" t-value="True"/>
+    <t t-call="web.basic_layout">
+    
+      <t t-foreach="set(docs.mapped('employee_id'))" t-as="emp">
+      <div class="page">
+        <!-- Report header -->
+        <div class="oe_report_header">
+            <h2 t-field="emp.name"/>
+            <t t-set="emp_docs" t-value="docs.filtered(lambda x:x.employee_id == emp )"/>
+        </div>
+
+          <table class="table table-sm table-bordered">
+              
+              <thead>
+                  <tr>
+                      
+                  <th  width="160px" rowspan="2">Date</th>
+                  <th  width="60px" rowspan="2">horaire</th>
+                  <th colspan="7" >heures</th>
+                  <th colspan="6">Heure Supp</th>
+                  </tr>
+                  
+                  <tr> 
+                  <td width="45px">Mv1</td>
+                  <td width="45px">Mv2</td>
+                  <td width="45px">Mv3</td>
+                  <td width="45px">Mv4</td>
+                  <td width="45px">Mv5</td>
+                  <td width="45px">Mv6</td>
+                  <td width=" " style="white-space:nowrap">..</td>
+                  <td width="45px">0 %</td>
+                  <td width="45px">25 %</td>
+                  <td width="45px">50 %</td>
+                  <td width="45px">100 %</td>
+                  <td width="45px">200 %</td>
+                  <td width="45px">HS.C</td>
+                  </tr>
+              </thead>
+              <tbody>
+                    <t t-set="days" t-value="(end_date - start_date).days + 1"/>
+                    <t t-foreach="range(days)" t-as="i">
+                        <t t-set="day" t-value="(start_date + datetime.timedelta(days=i))"/>
+                        <t t-set="punch_day" t-value="emp_docs.filtered(lambda x:x.punch_time.date()== day).sorted(lambda x:x.punch_time)"/>
+                        <tr>
+                            <td><span t-esc="day"/></td>
+                            <td>
+                              <span  t-esc="punch_day and poste(punch_day[:1].punch_time) or ''"/>
+                            </td>
+                         
+                            
+                              <t t-foreach="punch_day[:6].mapped(lambda x:x.punch_time and x.punch_time.strftime('%H:%M') or 'err') + [False,False,False,False,False,False,][len(punch_day):]" t-as="h"> 
+                                <td>
+                                    <span>
+                                <t t-esc="h"/>
+                                    </span>
+                                </td>
+                              </t>
+                                <td>
+                              <t t-foreach="punch_day[6:]" t-as="h"> 
+                                <span class="" t-esc="h.punch_time.strftime('%H:%M') + ' | ' "/>
+                              </t>
+                                </td>
+                            <td><span t-esc="A"/></td>
+                            <td><span t-esc="A"/></td>
+                            <td><span t-esc="A"/></td>
+                            <td><span t-esc="A"/></td>
+                            <td><span t-esc="A"/></td>
+                            <td><span t-esc="A"/></td>
+                        </tr>
+                  </t>
+              </tbody>
+          </table>
+   
+      </div>
+      </t>
+    </t>
+  
+  </template>
+
+  <!-- Report action -->
+ 
+  <record id="action_report_transaction_report" model="ir.actions.report">
+        <field name="name">My transaction Report</field>
+        <field name="model">zk.transaction</field> <!-- Replace with your model -->
+        <field name="report_type">qweb-pdf</field>
+        <field name="report_name">nabi_hr.report_transaction_report_document</field>
+        <field name="report_file">nabi_hr.report_transaction_report_document</field>
+        <field name="print_report_name">'My Report - %s' % (object.name or '')</field>
+        <field name="binding_model_id" ref="model_zk_transaction"/> 
+        <field name="binding_type">report</field>
+    
+    </record>
+    <!-- visitor -->
+
+    <record model="ir.ui.view" id="nabi_hr.visitor_list">
+      <field name="name">Visiteurs</field>
+      <field name="model">visitor</field>
+      <field name="arch" type="xml">
+        <list editable="top" decoration-primary="state=='n'" decoration-warning="state=='s'" decoration-success="state=='e'"  decoration-muted="state=='p'"
+decoration-bf="state=='n'"
+    >
+        
+          <field name="name"/>               
+          <field name="accompagne_par"/>     
+          <field name="id_number"/>          
+          <field name="societe"/>            
+          <field name="objet_visite"/>       
+          <field name="service"/>            
+          <field name="employee_id"/>        
+          <field name="declaration_entree"/> 
+          <field name="date_entree"/> <button name="checkin" type="object" string="⬆"/>
+          <field name="declaration_sortie"/> 
+          <field name="date_sortie"/>        
+          <button name="checkout" type="object" string="⬇"/>
+          <field name="numero_badge"/>       
+          <field name="consignes"/>          
+          <field name="state"/>              
+
+        </list>
+      </field>
+    </record>
+
+
+    <!-- actions visiteur -->
+
+    <record model="ir.actions.act_window" id="nabi_hr.action_visiteur">
+      <field name="name">Visiteurs</field>
+      <field name="res_model">visitor</field>
+      <field name="view_mode">list,form</field>
+    </record>
+
+
+    <!-- server action to the one above -->
+<!--
+    <record model="ir.actions.server" id="nabi_hr.action_server">
+      <field name="name">nabi_hr server</field>
+      <field name="model_id" ref="model_nabi_hr_nabi_hr"/>
+      <field name="state">code</field>
+      <field name="code">
+        action = {
+          "type": "ir.actions.act_window",
+          "view_mode": "list,form",
+          "res_model": model._name,
+        }
+      </field>
+    </record>
+-->
+
+    <!-- Top menu item -->
+
+    <menuitem name="Visiteurs" id="nabi_hr.menu_visiteur_root">
+
+      <menuitem name="Visiteurs"  id="nabi_hr.menu_visiteur_sub">
+
+        
+          <menuitem name="Visiteurs" id="nabi_hr.menu_visiteur_visiteur" action="nabi_hr.action_visiteur" />
+      </menuitem>
+    </menuitem>
+
+    <!-- menu categories -->
+<!--
+    <menuitem name="Menu 2" id="nabi_hr.menu_2" parent="nabi_hr.menu_root"/>
+-->
+    <!-- actions -->
+<!--
+    <menuitem name="List" id="nabi_hr.menu_1_list" parent="nabi_hr.menu_1"
+              action="nabi_hr.action_window"/>
+    <menuitem name="Server to list" id="nabi_hr" parent="nabi_hr.menu_2"
+              action="nabi_hr.action_server"/>
+-->
+  </data>
+</odoo>
