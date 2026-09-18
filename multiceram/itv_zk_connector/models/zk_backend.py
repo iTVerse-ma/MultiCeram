@@ -69,8 +69,11 @@ class ItvZkBackend(models.Model):
         "Historique initial (jours)", default=1,
         help="Profondeur reprise lors de la toute première synchronisation, quand aucun filigrane n'existe encore. "
              "Ensuite, seul le recouvrement s'applique.")
-    overlap_minutes = fields.Integer("Recouvrement (min)", default=120,
-                                     help="Chaque import repart de la fin du précédent moins ce recouvrement.")
+    overlap_minutes = fields.Integer("Recouvrement (min)", default=30,
+                                     help="Chaque import repart de la fin du précédent moins ce recouvrement, pour "
+                                          "reprendre les pointages arrivés avec un peu de retard. Réglé par le mode de "
+                                          "synchronisation (Présences → Configuration) ; les gros retards (terminal hors ligne) sont "
+                                          "rattrapés au retour en ligne du terminal et par la réconciliation nocturne.")
     reconcile_days = fields.Integer("Réconciliation (jours)", default=35,
                                     help="Profondeur de la comparaison quotidienne des comptages BioTime / Odoo.")
     offline_after_minutes = fields.Integer(
@@ -219,7 +222,9 @@ class ItvZkBackend(models.Model):
         }
 
     def action_sync_now(self):
-        for xmlid in ('itv_zk_connector.ir_cron_itv_zk_terminals', 'itv_zk_connector.ir_cron_itv_zk_transactions'):
+        # Tout ce qui vient de la pointeuse : terminaux, employés créés dessus, puis pointages.
+        for xmlid in ('itv_zk_connector.ir_cron_itv_zk_terminals', 'itv_zk_connector.ir_cron_itv_zk_employees',
+                      'itv_zk_connector.ir_cron_itv_zk_transactions'):
             self.env.ref(xmlid).sudo()._trigger()
         return {
             'type': 'ir.actions.client',
@@ -227,6 +232,6 @@ class ItvZkBackend(models.Model):
             'params': {
                 'type': 'info',
                 'title': _("Synchronisation lancée"),
-                'message': _("Les résultats apparaîtront dans le journal de synchronisation."),
+                'message': _("Terminaux, employés et pointages : résultats dans le journal de synchronisation d'ici une minute."),
             },
         }

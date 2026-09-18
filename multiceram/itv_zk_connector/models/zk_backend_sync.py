@@ -2,6 +2,7 @@
 """Algorithmes de synchronisation BioTime → Odoo : pointages, terminaux, employés."""
 import hashlib
 import json
+import logging
 import time
 from datetime import timedelta
 
@@ -16,6 +17,8 @@ EMPLOYEES_PATH = 'personnel/api/employees/'
 DEPARTMENTS_PATH = 'personnel/api/departments/'
 # Durée maximale d'une exécution avant de rendre la main au planificateur.
 TIME_BOX_SECONDS = 120
+
+_logger = logging.getLogger(__name__)
 
 
 class ItvZkBackend(models.Model):
@@ -33,6 +36,24 @@ class ItvZkBackend(models.Model):
         start = (state.watermark or now - timedelta(days=self.initial_sync_days)) - timedelta(minutes=self.overlap_minutes)
         if self._import_transaction_window(stats, start, now):
             state.write({'watermark': now, 'last_success': now})
+        self._check_employee_count()
+
+    def _check_employee_count(self):
+        """Employé créé ou supprimé sur la pointeuse : il arrive dans Odoo au rythme des pointages.
+
+        BioTime ne filtre pas les employés par date de modification : on ne lui demande que leur
+        nombre (une ligne), et la synchronisation complète ne part que s'il a changé.
+        Les simples modifications suivent la cadence normale de la synchronisation des employés.
+        """
+        state = self.env['itv.zk.sync.state']._get(self, 'employees')
+        try:
+            response = self._get_client().request('GET', EMPLOYEES_PATH, params={self.page_size_param: 1})
+        except Exception as error:  # le contrôle ne doit jamais faire échouer l'import des pointages
+            _logger.warning("BioTime %s : comptage des employés impossible (%s)", self.name, error)
+            return
+        count = (response or {}).get('count')
+        if count is not None and count != (state.cursor or {}).get('count'):
+            self.env.ref('itv_zk_connector.ir_cron_itv_zk_employees').sudo()._trigger()
 
     def _import_transaction_window(self, stats, start, end, extra_params=None):
         """Importe les pointages d'une fenêtre UTC. Rend False si le temps imparti est écoulé."""
@@ -191,7 +212,8 @@ class ItvZkBackend(models.Model):
                     stats.messages.append(_("Employé %(code)s ignoré : %(error)s", code=code, error=exc))
         finally:
             stats.api_calls += client.calls
-        state.last_success = fields.Datetime.now()
+        # Nombre vu par cette synchronisation : référence du contrôle fait à chaque import de pointages.
+        state.write({'last_success': fields.Datetime.now(), 'cursor': dict(state.cursor or {}, count=stats.fetched)})
 
     def _prepare_employee_vals(self, record, department_ids):
         """Champs repris de BioTime. Le hash du mot de passe (self_password) n'est jamais lu."""

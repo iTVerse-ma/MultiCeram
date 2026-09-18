@@ -7,6 +7,9 @@
         <field name="arch" type="xml">
             <xpath expr="//block[@name='overtime_settings']" position="after">
                 <block title="BioTime" name="itv_biotime_settings">
+                    <setting string="Synchronisation des pointages" help="Délai entre un pointage sur la borne et son apparition dans Odoo.">
+                        <field name="itv_zk_sync_mode" widget="radio"/>
+                    </setting>
                     <setting string="Connexions BioTime" help="Serveurs BioTime interrogés, lecture seule et santé de la synchronisation.">
                         <button name="%(itv_zk_connector.itv_zk_backend_action)d" type="action" string="Connexions" class="btn-link" icon="oi-arrow-right"/>
                     </setting>

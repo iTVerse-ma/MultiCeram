@@ -14,7 +14,7 @@ Connecteur ZKTeco BioTime pour Odoo 19, intégré à l'application Présences :
     'author': "iTVerse",
     'website': "https://itverse.ma",
     'category': 'Human Resources/Attendances',
-    'version': '19.0.1.1.0',
+    'version': '19.0.1.2.0',
     'license': 'LGPL-3',
 
     'depends': [

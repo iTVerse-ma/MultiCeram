@@ -12,6 +12,9 @@ class ItvZkPunch(models.Model):
     def _on_punches_imported(self):
         super()._on_punches_imported()
         self._itv_enqueue_legacy()
+        if self and self.env['itv.zk.backend']._itv_recompute_immediately():
+            # Mode « Instantané » : sans attendre le passage des 10 minutes. La file ne contient que les journées touchées.
+            self.env.ref('itv_zk_attendance.ir_cron_itv_attendance_recompute')._trigger()
 
     def write(self, vals):
         previous = [(punch.employee_id.id, punch.date_override) for punch in self] if 'date_override' in vals else []

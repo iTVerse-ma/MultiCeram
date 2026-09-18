@@ -8,3 +8,4 @@ from . import zk_punch
 from . import zk_outbox
 from . import hr_employee
 from . import hr_department
+from . import res_config_settings
