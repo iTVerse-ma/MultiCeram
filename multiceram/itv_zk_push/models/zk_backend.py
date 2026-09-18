@@ -39,19 +39,37 @@ class ZkBackend(models.Model):
         return area_id
 
     def _push_reference_ids(self, client, employee):
-        """Identifiants BioTime (département, zones) à utiliser pour cet employé."""
+        """Identifiants BioTime (département, zones) à utiliser pour cet employé.
+
+        Les identifiants stockés dans Odoo peuvent venir d'un autre serveur BioTime (reprise de
+        la production) : on ne garde que ceux que ce serveur connaît.
+        """
         self.ensure_one()
         department_id = employee.department_id.itv_biotime_dept_id if 'itv_biotime_dept_id' in employee.department_id._fields else 0
+        if department_id:
+            known = {record.get('id') for record in client.iter_records(DEPARTMENTS_PATH, params={self.page_size_param: 100})}
+            if department_id not in known:
+                department_id = 0
         if not department_id:
             department_id = self._lookup_reference(client, DEPARTMENTS_PATH, 'dept_code', self.push_department_code)
         if not employee.active:
-            area_id = self._archive_area_id(client)
+            area_ids = [self._archive_area_id(client)]
         else:
-            area_id = self._lookup_reference(client, AREAS_PATH, 'area_code', self.push_area_code)
-        if not department_id or not area_id:
+            terminals = employee.sudo().itv_terminal_ids.filtered(
+                lambda terminal: terminal.backend_id == self and terminal.biotime_area_id)
+            area_ids = sorted(set(terminals.mapped('biotime_area_id'))) or [
+                self._lookup_reference(client, AREAS_PATH, 'area_code', self.push_area_code)]
+        if not department_id or not all(area_ids):
             raise UserError(_("Département ou zone introuvable dans BioTime (codes %s / %s).")
                             % (self.push_department_code, self.push_area_code))
-        return department_id, [area_id]
+        return department_id, area_ids
+
+    def _find_biotime_employee_id(self, client, code):
+        """Identifiant de l'employé sur ce serveur BioTime, cherché par matricule."""
+        for record in client.iter_records(EMPLOYEES_PATH, params={'emp_code': code, self.page_size_param: 10}):
+            if str(record.get('emp_code') or '') == str(code):
+                return record.get('id')
+        return 0
 
     def _lookup_reference(self, client, path, code_field, code):
         """Cherche un enregistrement de référence par son code ; à défaut, prend le premier."""
@@ -70,8 +88,11 @@ class ZkBackend(models.Model):
             'department': department_id,
             'area': area_ids,
         }
-        if employee.itv_biotime_pin:
-            payload['device_password'] = employee.itv_biotime_pin
+        if employee.sudo().pin:
+            payload['device_password'] = employee.sudo().pin
+        # Toujours envoyé : vider le champ dans Odoo retire la carte de la pointeuse.
+        payload['card_no'] = employee.sudo().itv_card_no or ''
+
         return payload
 
     def _push_employee(self, employee):
@@ -83,11 +104,17 @@ class ZkBackend(models.Model):
         client = self._get_client()
         department_id, area_ids = self._push_reference_ids(client, employee)
         payload = self._push_employee_payload(employee, department_id, area_ids)
-        if employee.itv_biotime_emp_id:
-            response = client.request('PATCH', '%s%s/' % (EMPLOYEES_PATH, employee.itv_biotime_emp_id), json=payload)
+        # L'identifiant stocké peut appartenir à un autre serveur : le matricule fait foi.
+        existing_id = self._find_biotime_employee_id(client, employee.barcode)
+        previous_code = employee.sudo().itv_biotime_code
+        if not existing_id and previous_code and previous_code != employee.barcode:
+            # Matricule changé dans Odoo : on renomme la fiche BioTime au lieu d'en créer une seconde.
+            existing_id = self._find_biotime_employee_id(client, previous_code)
+        if existing_id:
+            response = client.request('PATCH', '%s%s/' % (EMPLOYEES_PATH, existing_id), json=payload)
         else:
             response = client.request('POST', EMPLOYEES_PATH, json=payload)
-        biotime_id = (response or {}).get('id') or employee.itv_biotime_emp_id
+        biotime_id = (response or {}).get('id') or existing_id
         if not biotime_id:
             raise UserError(_("BioTime n'a pas renvoyé d'identifiant pour « %s ».") % employee.display_name)
         return biotime_id

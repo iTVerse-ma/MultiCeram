@@ -11,7 +11,7 @@ Les envois passent par la file `itv.zk.outbox` (opération « Employé ») : cha
 tentative laisse une trace, les erreurs sont rejouables, et rien n'est envoyé si la
 connexion est en lecture seule.
 """,
-    'version': '19.0.1.0.0',
+    'version': '19.0.1.1.0',
     'category': 'Human Resources/Attendances',
     'license': 'LGPL-3',
     'author': "iTVerse",

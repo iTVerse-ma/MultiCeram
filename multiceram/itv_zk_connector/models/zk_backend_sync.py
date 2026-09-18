@@ -123,6 +123,7 @@ class ItvZkBackend(models.Model):
                     'alias': record.get('alias') or serial,
                     'ip_address': record.get('ip_address') or False,
                     'area_name': area.get('area_name') or False,
+                    'biotime_area_id': area.get('id') or 0,
                     'biotime_state': str(record['state']) if record.get('state') is not None else False,
                     'terminal_tz': str(record['terminal_tz']) if record.get('terminal_tz') is not None else False,
                     'last_activity': last_activity,
@@ -171,6 +172,10 @@ class ItvZkBackend(models.Model):
                     stats.unchanged += 1
                     continue
                 vals['itv_biotime_sync_hash'] = digest
+                if employee and employee.department_id:
+                    # Le département se gère dans Odoo : BioTime ne le remplit que pour une fiche qui n'en a pas
+                    # (employé créé sur la pointeuse), sinon un repli côté BioTime écraserait le vrai.
+                    vals.pop('department_id', None)
                 try:
                     with self.env.cr.savepoint():
                         if employee:

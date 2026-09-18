@@ -35,6 +35,9 @@ class ItvZkTerminal(models.Model):
                           "Il identifie le terminal : le changer romprait le lien avec ses pointages.")
     alias = fields.Char("Nom", required=True)
     area_name = fields.Char("Zone BioTime")
+    biotime_area_id = fields.Integer("ID zone BioTime", readonly=True,
+                                     help="Zone du terminal dans BioTime : un employé est envoyé à toutes les "
+                                          "pointeuses de ses zones.")
     ip_address = fields.Char("Adresse IP")
     biotime_state = fields.Char("État BioTime (code brut)")
     terminal_tz = fields.Char("Fuseau déclaré (code brut)")

@@ -21,7 +21,7 @@ class ZkOutbox(models.Model):
             ('res_model', '=', 'hr.employee'), ('res_id', '=', employee.id),
             ('state', 'in', ('pending', 'error')),
         ], limit=1)
-        payload = {'barcode': employee.barcode, 'name': employee.name, 'pin': bool(employee.itv_biotime_pin)}
+        payload = {'barcode': employee.barcode, 'name': employee.name, 'pin': bool(employee.sudo().pin)}
         if pending:
             pending.write({'payload': payload, 'state': 'pending', 'last_error': False})
             return pending
@@ -43,6 +43,7 @@ class ZkOutbox(models.Model):
                     biotime_id = entry.backend_id._push_employee(employee)
                     employee.write({
                         'itv_biotime_emp_id': biotime_id,
+                        'itv_biotime_code': employee.barcode,
                         'itv_push_state': 'sent',
                         'itv_push_error': False,
                         'itv_pushed_at': fields.Datetime.now(),

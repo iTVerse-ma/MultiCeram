@@ -6,10 +6,20 @@ from odoo.exceptions import UserError
 class HrEmployee(models.Model):
     _inherit = 'hr.employee'
 
-    itv_biotime_pin = fields.Char(
-        "PIN pointeuse", groups='hr.group_hr_user', copy=False,
-        help="Code numérique saisi sur la pointeuse (device_password côté BioTime). "
-             "Le matricule sert d'identifiant ; ce PIN n'est utilisé que pour la saisie clavier.")
+    # Le PIN envoyé à la pointeuse est le « Code PIN » natif d'Odoo (celui du mode kiosque) :
+    # un seul code par employé, quel que soit l'endroit où il pointe.
+    itv_card_no = fields.Char(
+        "N° de carte", groups='hr.group_hr_user', copy=False,
+        help="Numéro du badge RFID tel que la pointeuse le lit. Le plus sûr : enrôler la carte sur la "
+             "pointeuse (Utilisateur → Carte → passer la carte), il revient ici à la synchronisation. "
+             "Sinon, saisir le numéro imprimé sur la carte.")
+    itv_terminal_ids = fields.Many2many(
+        'itv.zk.terminal', 'itv_employee_terminal_rel', 'employee_id', 'terminal_id',
+        string="Pointeuses", groups='hr.group_hr_user', copy=False,
+        domain="[('biotime_area_id', '!=', 0), ('backend_id.read_only', '=', False)]",
+        help="Pointeuses sur lesquelles l'employé peut pointer. BioTime affecte les employés par zone : "
+             "choisir une pointeuse l'envoie à toutes les pointeuses de la même zone.\n"
+             "Vide : zone par défaut de la connexion BioTime.")
     itv_push_state = fields.Selection([
         ('draft', "Non envoyé"),
         ('queued', "En file"),
@@ -18,9 +28,13 @@ class HrEmployee(models.Model):
     ], string="Envoi BioTime", default='draft', groups='hr.group_hr_user', copy=False, readonly=True)
     itv_push_error = fields.Text("Dernière erreur d'envoi", groups='hr.group_hr_user', copy=False, readonly=True)
     itv_pushed_at = fields.Datetime("Envoyé à BioTime le", groups='hr.group_hr_user', copy=False, readonly=True)
+    itv_biotime_code = fields.Char(
+        "Matricule connu de BioTime", groups='hr.group_hr_user', copy=False, readonly=True,
+        help="Dernier matricule échangé avec BioTime. Si le matricule change dans Odoo, la fiche BioTime "
+             "existante est renommée au lieu d'en créer une seconde.")
 
     # Champs qui, modifiés, doivent repartir vers BioTime.
-    ITV_PUSH_FIELDS = ('name', 'barcode', 'itv_biotime_pin', 'department_id', 'active')
+    ITV_PUSH_FIELDS = ('name', 'barcode', 'pin', 'itv_card_no', 'department_id', 'active', 'itv_terminal_ids')
 
     @api.model_create_multi
     def create(self, vals_list):

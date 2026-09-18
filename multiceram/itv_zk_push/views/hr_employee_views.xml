@@ -10,8 +10,16 @@
                         class="btn-secondary" invisible="not barcode"/>
                 <field name="itv_push_state" widget="statusbar" statusbar_visible="draft,sent"/>
             </xpath>
-            <xpath expr="//field[@name='barcode']" position="after">
-                <field name="itv_biotime_pin"/>
+            <!-- Ce qu'on tape sur la pointeuse : matricule (identifiant) et Code PIN, puis où il pointe. -->
+            <xpath expr="//group[@name='identification_group']/field[@name='pin']" position="attributes">
+                <attribute name="help">Code tapé sur la pointeuse après le matricule (et dans le mode kiosque d'Odoo). Chiffres uniquement.</attribute>
+            </xpath>
+            <xpath expr="//group[@name='identification_group']/label[@for='barcode']" position="attributes">
+                <attribute name="string">Matricule (ID pointeuse)</attribute>
+            </xpath>
+            <xpath expr="//group[@name='identification_group']" position="inside">
+                <field name="itv_card_no" placeholder="Passer la carte sur la pointeuse"/>
+                <field name="itv_terminal_ids" widget="many2many_tags" options="{'no_create': True}"/>
             </xpath>
             <!-- Suivi de la synchronisation, à côté de l'identifiant BioTime. -->
             <xpath expr="//group[@name='itv_biotime']" position="inside">
