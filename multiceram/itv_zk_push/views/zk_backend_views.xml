@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="itv_zk_backend_view_form_push" model="ir.ui.view">
+        <field name="name">itv.zk.backend.form.push</field>
+        <field name="model">itv.zk.backend</field>
+        <field name="inherit_id" ref="itv_zk_connector.itv_zk_backend_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='read_only']" position="after">
+                <field name="push_department_code"/>
+                <field name="push_area_code"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

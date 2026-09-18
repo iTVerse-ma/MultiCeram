@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="view_employee_form_itv_push" model="ir.ui.view">
+        <field name="name">hr.employee.form.itv.push</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="action_push_to_biotime" type="object" string="Envoyer vers BioTime"
+                        class="btn-secondary" invisible="not barcode"/>
+                <field name="itv_push_state" widget="statusbar" statusbar_visible="draft,sent"/>
+            </xpath>
+            <xpath expr="//field[@name='barcode']" position="after">
+                <field name="itv_biotime_pin"/>
+            </xpath>
+            <!-- Suivi de la synchronisation, à côté de l'identifiant BioTime. -->
+            <xpath expr="//group[@name='itv_biotime']" position="inside">
+                <field name="itv_push_state"/>
+                <field name="itv_pushed_at" readonly="1" invisible="not itv_pushed_at"/>
+                <field name="itv_push_error" readonly="1" invisible="itv_push_state != 'error'"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>
