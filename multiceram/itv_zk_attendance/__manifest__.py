@@ -27,6 +27,7 @@ Extension de l'application Présences :
         'security/itv_attendance_security.xml',
         'security/ir.model.access.csv',
         'data/ir_cron.xml',
+        'data/itv_security_scope.xml',
         'data/hr_version_data.xml',
         'data/res_company_data.xml',
         'data/hr_leave_type_data.xml',

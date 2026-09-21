@@ -1,0 +1,5 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Dernier chargé : remet les règles natives au périmètre de l'organigramme. -->
+    <function model="ir.rule" name="itv_apply_hierarchy_scope"/>
+</odoo>

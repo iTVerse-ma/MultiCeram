@@ -10,3 +10,4 @@ from . import hr_leave
 from . import hr_version
 from . import zk_punch
 from . import zk_terminal
+from . import ir_rule
