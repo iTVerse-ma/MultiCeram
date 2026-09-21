@@ -48,7 +48,16 @@ class TestOvertimeCircuit(TransactionCase):
 
     def _propose(self):
         self.day.action_propose_overtime()
-        return self.day.overtime_line_ids
+        lines = self.day.overtime_line_ids
+        self._declare(lines)
+        return lines
+
+    def _declare(self, lines):
+        """Avec itv_hr_portal installé, l'employé déclare ses heures avant toute validation."""
+        if 'itv_declaration_state' not in lines._fields:
+            return
+        lines._itv_ask_declaration("Combien d'heures avez-vous faites ?")
+        lines.sudo()._itv_portal_declare(lines[:1].duration)
 
     def test_proposal_is_shown_on_the_native_attendance(self):
         line = self._propose()

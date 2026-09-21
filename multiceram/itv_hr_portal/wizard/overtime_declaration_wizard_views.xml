@@ -10,10 +10,15 @@
                     Sa réponse revient ici, à côté des heures détectées, pour que vous décidiez.
                 </div>
                 <group>
+                    <field name="mode" widget="radio"/>
                     <field name="question" placeholder="Combien d'heures supplémentaires avez-vous faites ce jour-là ?"/>
+                    <field name="declared_hours" widget="float_time" invisible="mode != 'offline'"
+                           required="mode == 'offline'"/>
+                    <field name="declared_note" invisible="mode != 'offline'"
+                           placeholder="ex. réponse donnée oralement le 21/09"/>
                 </group>
                 <footer>
-                    <button name="action_send" type="object" string="Envoyer à l'employé" class="btn-primary"/>
+                    <button name="action_send" type="object" string="Enregistrer" class="btn-primary"/>
                     <button string="Annuler" class="btn-secondary" special="cancel"/>
                 </footer>
             </form>

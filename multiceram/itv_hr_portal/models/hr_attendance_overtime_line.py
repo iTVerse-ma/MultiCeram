@@ -38,6 +38,32 @@ class HrAttendanceOvertimeLine(models.Model):
             answered = line.itv_declaration_state == 'answered'
             line.itv_declaration_gap = (line.itv_declared_hours - line.itv_system_hours) if answered else 0.0
 
+    def _compute_itv_can_act(self):
+        """Tant que l'employé n'a pas déclaré ses heures, il n'y a rien à valider."""
+        super()._compute_itv_can_act()
+        for line in self.filtered(lambda l: l.itv_declaration_state != 'answered'):
+            line.itv_can_validate_1 = False
+            line.itv_can_validate_2 = False
+
+    def _itv_check_declaration(self):
+        """La déclaration de l'employé précède toute validation : c'est elle qu'on recoupe."""
+        missing = self._itv_day_lines().filtered(lambda line: line.itv_declaration_state != 'answered')
+        if missing:
+            line = missing[0]
+            raise UserError(_(
+                "%(employee)s n'a pas encore déclaré ses heures du %(date)s. Demandez-les-lui "
+                "(bouton « Demander ses heures à l'employé ») : sa réponse sert à recouper le calcul. "
+                "Si l'employé n'a pas d'accès au portail, saisissez sa réponse dans la même fenêtre.",
+                employee=line.employee_id.display_name, date=line.date))
+
+    def action_itv_validate_1(self):
+        self._itv_check_declaration()
+        return super().action_itv_validate_1()
+
+    def action_itv_validate_2(self):
+        self._itv_check_declaration()
+        return super().action_itv_validate_2()
+
     # -- Côté responsable -------------------------------------------------------------------------
 
     def action_itv_ask_declaration(self):
