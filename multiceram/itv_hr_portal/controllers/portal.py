@@ -124,7 +124,8 @@ class ItvHrPortal(CustomerPortal):
             months=sorted(months.items(), reverse=True),
             to_declare=lines.filtered(lambda line: line.itv_declaration_state == 'asked'),
             validated_total=sum(lines.filtered(lambda l: l.itv_state == 'validated_2').mapped('duration')),
-            pending_total=sum(lines.filtered(lambda l: l.itv_state in ('submitted', 'validated_1')).mapped('duration')),
+            # Un décompte de journées, pas d'heures : l'employé ne doit pas déduire le calcul.
+            pending_days=len(set(lines.filtered(lambda l: l.itv_state in ('submitted', 'validated_1')).mapped('date'))),
         )
         return request.render('itv_hr_portal.portal_my_overtime', values)
 
