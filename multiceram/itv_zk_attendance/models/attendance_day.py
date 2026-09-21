@@ -52,6 +52,7 @@ def _hours(value):
 
 class ItvAttendanceDay(models.Model):
     _name = 'itv.attendance.day'
+    _inherit = ['itv.audit.mixin']
     _description = "Journée de pointage"
     _order = 'date desc, employee_id'
     _rec_name = 'date'
@@ -100,8 +101,9 @@ class ItvAttendanceDay(models.Model):
     lg_absent_day = fields.Integer("Jour sans pointage")
 
     # -- Anomalies ----------------------------------------------------------------------------------
-    anomaly_resolution = fields.Selection([('justified', "Justifiée"), ('ignored', "Ignorée")], string="Traitement de l'anomalie", copy=False)
-    anomaly_note = fields.Char("Motif de l'anomalie")
+    anomaly_resolution = fields.Selection([('justified', "Justifiée"), ('ignored', "Ignorée")],
+                                          string="Traitement de l'anomalie", copy=False, tracking=True)
+    anomaly_note = fields.Char("Motif de l'anomalie", tracking=True)
     anomaly_state = fields.Selection(ANOMALY_STATES, string="Anomalie", compute='_compute_anomaly_state', store=True,
                                      help="Pointage de présence ou de porte impair, détecté présent, ou présence non reportée.")
 

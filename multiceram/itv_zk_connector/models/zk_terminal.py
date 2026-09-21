@@ -22,6 +22,7 @@ TERMINAL_USAGES = [
 
 class ItvZkTerminal(models.Model):
     _name = 'itv.zk.terminal'
+    _inherit = ['itv.audit.mixin']
     _description = "Terminal BioTime"
     _order = 'backend_id, alias, sn'
     _rec_name = 'alias'
@@ -50,16 +51,16 @@ class ItvZkTerminal(models.Model):
              "d'usine (UTC+08:00) tant qu'on ne les règle pas dans leur menu.\n"
              "Cette valeur est indicative : les calculs d'Odoo suivent le fuseau de la connexion, "
              "ou le « Fuseau forcé » ci-dessous s'il est renseigné.")
-    usage = fields.Selection(TERMINAL_USAGES, string="Usage", required=True, default='unclassified',
+    usage = fields.Selection(TERMINAL_USAGES, string="Usage", required=True, default='unclassified', tracking=True,
                              help="Détermine comment les pointages de ce terminal entrent dans les calculs.")
     direction = fields.Selection(
         [('in', "Entrée"), ('out', "Sortie"), ('none', "Sans sens")],
-        string="Sens", required=True, default='none')
+        string="Sens", required=True, default='none', tracking=True)
     is_uhf_bridge = fields.Boolean("Pont UHF (CVSecurity)",
                                    help="Terminal virtuel qui reçoit les passages des lecteurs UHF de CVSecurity.")
     is_virtual = fields.Boolean("Terminal virtuel")
     timezone_override = fields.Char(
-        "Fuseau forcé",
+        "Fuseau forcé", tracking=True,
         help="À renseigner si l'horloge de ce terminal ne suit pas le fuseau de la connexion "
              "(ex. décalage d'une heure pendant le Ramadan).")
     last_activity = fields.Datetime("Dernière activité", readonly=True)

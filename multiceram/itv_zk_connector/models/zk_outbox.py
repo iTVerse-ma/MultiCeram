@@ -4,6 +4,7 @@ from odoo import fields, models
 
 class ItvZkOutbox(models.Model):
     _name = 'itv.zk.outbox'
+    _inherit = ['itv.audit.mixin']
     _description = "File d'envoi vers BioTime"
     _order = 'id desc'
 
@@ -17,7 +18,7 @@ class ItvZkOutbox(models.Model):
     payload = fields.Json("Contenu", required=True)
     res_model = fields.Char("Modèle d'origine")
     res_id = fields.Many2oneReference("Enregistrement d'origine", model_field='res_model')
-    state = fields.Selection([
+    state = fields.Selection(tracking=True, selection=[
         ('pending', "En attente"),
         ('sent', "Envoyé"),
         ('confirmed', "Confirmé"),

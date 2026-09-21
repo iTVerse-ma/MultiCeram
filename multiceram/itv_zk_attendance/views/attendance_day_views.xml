@@ -57,6 +57,86 @@
         </field>
     </record>
 
+    <record id="itv_attendance_day_view_form" model="ir.ui.view">
+        <field name="name">itv.attendance.day.form</field>
+        <field name="model">itv.attendance.day</field>
+        <field name="arch" type="xml">
+            <form string="Journée de pointage" create="0" delete="0" edit="0">
+                <header>
+                    <button name="%(itv_attendance_anomaly_wizard_action)d" type="action" string="Traiter l'anomalie"
+                            class="btn-primary" invisible="anomaly_state != 'open'"/>
+                    <button name="action_reopen_anomaly" type="object" string="Rouvrir l'anomalie"
+                            invisible="anomaly_state not in ('justified', 'ignored')"/>
+                    <button name="action_propose_overtime" type="object" string="Proposer les heures supplémentaires"
+                            invisible="overtime_state or lg_error"/>
+                    <button name="action_open_punches" type="object" string="Pointages de la journée"/>
+                    <field name="anomaly_state" widget="statusbar" invisible="not anomaly_state"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="employee_id" widget="many2one_avatar_employee" readonly="1"/></h1>
+                        <h3><field name="date" readonly="1"/> — <field name="weekday" readonly="1"/></h3>
+                    </div>
+                    <group>
+                        <group string="Pointages">
+                            <field name="punch_summary"/>
+                            <field name="lg_punch_count"/>
+                            <field name="lg_clean_count"/>
+                            <field name="lg_carried_count"/>
+                            <field name="department_id"/>
+                        </group>
+                        <group string="Journée">
+                            <field name="has_leave"/>
+                            <field name="is_holiday"/>
+                            <field name="is_rest_day"/>
+                            <field name="lg_error" invisible="not lg_error"/>
+                            <field name="attendance_conflict" invisible="not attendance_conflict"/>
+                        </group>
+                        <group string="Calcul historique">
+                            <field name="lg_heures" widget="float_time"/>
+                            <field name="lg_heures25" widget="float_time"/>
+                            <field name="lg_pause" widget="float_time"/>
+                            <field name="lg_abs25" widget="float_time"/>
+                            <field name="lg_hs" widget="float_time"/>
+                            <field name="lg_hs25" widget="float_time"/>
+                            <field name="lg_hs50" widget="float_time"/>
+                        </group>
+                        <group string="Anomalie et heures supplémentaires" name="itv_day_anomaly">
+                            <field name="anomaly_label"/>
+                            <field name="anomaly_resolution"/>
+                            <field name="anomaly_note"/>
+                            <field name="overtime_state" invisible="not overtime_state"/>
+                            <field name="overtime_hours" widget="float_time" invisible="not overtime_state"/>
+                        </group>
+                    </group>
+                    <notebook>
+                        <page string="Présences" name="attendances">
+                            <field name="attendance_ids" readonly="1">
+                                <list>
+                                    <field name="check_in"/>
+                                    <field name="check_out"/>
+                                    <field name="worked_hours" widget="float_time"/>
+                                </list>
+                            </field>
+                        </page>
+                        <page string="Heures supplémentaires" name="overtime">
+                            <field name="overtime_line_ids" readonly="1">
+                                <list>
+                                    <field name="duration" widget="float_time"/>
+                                    <field name="itv_rate"/>
+                                    <field name="itv_state"/>
+                                    <field name="itv_validator_1_id" widget="many2one_avatar_user"/>
+                                    <field name="itv_validator_2_id" widget="many2one_avatar_user"/>
+                                </list>
+                            </field>
+                        </page>
+                    </notebook>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
     <record id="itv_attendance_day_view_list_anomalies" model="ir.ui.view">
         <field name="name">itv.attendance.day.list.anomalies</field>
         <field name="model">itv.attendance.day</field>
@@ -150,7 +230,7 @@
     <record id="itv_attendance_day_action" model="ir.actions.act_window">
         <field name="name">Pointage par employé</field>
         <field name="res_model">itv.attendance.day</field>
-        <field name="view_mode">list,pivot</field>
+        <field name="view_mode">list,form,pivot</field>
         <field name="view_id" ref="itv_attendance_day_view_list_legacy"/>
         <field name="search_view_id" ref="itv_attendance_day_view_search"/>
         <field name="context">{'search_default_group_employee': 1}</field>
@@ -163,7 +243,7 @@
     <record id="itv_attendance_day_action_anomalies" model="ir.actions.act_window">
         <field name="name">Anomalies</field>
         <field name="res_model">itv.attendance.day</field>
-        <field name="view_mode">list</field>
+        <field name="view_mode">list,form</field>
         <field name="view_id" ref="itv_attendance_day_view_list_anomalies"/>
         <field name="search_view_id" ref="itv_attendance_day_view_search"/>
         <field name="domain">[('anomaly_state', '!=', False)]</field>
@@ -177,7 +257,7 @@
     <record id="itv_attendance_day_action_legacy" model="ir.actions.act_window">
         <field name="name">Calcul historique</field>
         <field name="res_model">itv.attendance.day</field>
-        <field name="view_mode">pivot,list</field>
+        <field name="view_mode">pivot,list,form</field>
         <field name="view_id" eval="False"/>
         <field name="context">{}</field>
         <field name="search_view_id" ref="itv_attendance_day_view_search"/>

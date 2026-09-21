@@ -14,6 +14,7 @@ PUNCH_SOURCES = [
 
 class ItvZkPunch(models.Model):
     _name = 'itv.zk.punch'
+    _inherit = ['itv.audit.mixin']
     _description = "Pointage brut BioTime"
     _order = 'punch_time desc, id desc'
     _rec_name = 'punch_local'
@@ -39,12 +40,12 @@ class ItvZkPunch(models.Model):
     work_code = fields.Char("Code travail")
     upload_time = fields.Datetime("Reçu par BioTime", index=True)
     upload_delay_min = fields.Integer("Retard de réception (min)", compute='_compute_upload_delay', store=True)
-    duplicate = fields.Boolean("Doublon")
+    duplicate = fields.Boolean("Doublon", tracking=True)
     duplicate_origin = fields.Selection(
         [('migrated', "Migré"), ('rule_5min', "Règle 5 min"), ('rule_30min', "Règle 30 min"), ('manual', "Manuel")],
         string="Origine du doublon")
-    to_delete = fields.Boolean("Écarté", help="Suppression logique : le pointage reste en base mais sort du calcul historique.")
-    date_override = fields.Date("Date appliquée", help="Rattache le pointage à un autre jour dans le calcul historique.")
+    to_delete = fields.Boolean("Écarté", tracking=True, help="Suppression logique : le pointage reste en base mais sort du calcul historique.")
+    date_override = fields.Date("Date appliquée", tracking=True, help="Rattache le pointage à un autre jour dans le calcul historique.")
 
     _device_uniq = models.UniqueIndex("(backend_id, biotime_id) WHERE source = 'device'", "Cette transaction BioTime est déjà importée.")
     _manuallog_uniq = models.UniqueIndex("(backend_id, biotime_manuallog_id) WHERE biotime_manuallog_id <> 0", "Ce pointage manuel BioTime est déjà importé.")

@@ -67,11 +67,13 @@ class ItvAttendanceDay(models.Model):
         days = self.filtered(lambda day: day.anomaly_state and day.anomaly_state not in ('justified', 'ignored'))
         if not days:
             raise UserError(_("Aucune journée sélectionnée n'a d'anomalie encore ouverte."))
-        return days.write({
+        result = days.write({
             'itv_portal_state': 'sent',
             'itv_portal_message': message or False,
             'itv_portal_sent_date': fields.Datetime.now(),
         })
+        days._itv_audit(_("Anomalie envoyée à l'employé"), message)
+        return result
 
     def action_itv_portal_send(self):
         """Ouvre l'assistant : le responsable écrit ce qu'il attend avant d'envoyer à l'employé."""
@@ -106,6 +108,7 @@ class ItvAttendanceDay(models.Model):
                 'anomaly_resolution': 'justified',
                 'anomaly_note': day.anomaly_note or _("Explication de l'employé acceptée"),
             })
+            day._itv_audit(_("Explication acceptée"), day.itv_portal_reason)
         return True
 
     def action_itv_portal_refuse_back(self):
@@ -122,6 +125,7 @@ class ItvAttendanceDay(models.Model):
                 'anomaly_resolution': 'ignored',
                 'anomaly_note': day.anomaly_note or _("Explication refusée"),
             })
+            day._itv_audit(_("Explication refusée, dossier clos"), day.itv_portal_reason)
         return True
 
     def _itv_refer_overtime(self, hours, rate, note=False):
@@ -150,12 +154,15 @@ class ItvAttendanceDay(models.Model):
             'anomaly_resolution': 'justified',
             'anomaly_note': note or _("Requalifiée en heures supplémentaires"),
         })
+        days._itv_audit(_("Anomalie requalifiée en heures supplémentaires"),
+                        _("%(hours)s h au taux %(rate)s %%", hours=("%.2f" % hours).replace('.', ','), rate=rate))
         return True
 
     # -- Côté portail -----------------------------------------------------------------------------
 
     def _itv_portal_submit(self, reason):
         """Dépôt depuis le portail : appelé en sudo après contrôle d'appartenance."""
+        self._itv_audit(_("Explication déposée par l'employé"), reason)
         return self.write({
             'itv_portal_reason': reason,
             'itv_portal_state': 'submitted',

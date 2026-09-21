@@ -5,13 +5,15 @@ from odoo.exceptions import UserError
 
 class ItvAttendancePeriod(models.Model):
     _name = 'itv.attendance.period'
+    _inherit = ['itv.audit.mixin']
     _description = "Période de pointage"
     _order = 'month desc'
     _rec_name = 'month'
 
     company_id = fields.Many2one('res.company', string="Société", required=True, default=lambda self: self.env.company)
     month = fields.Date("Mois", required=True, help="Premier jour du mois concerné.")
-    state = fields.Selection([('open', "Ouverte"), ('closed', "Clôturée")], string="État", required=True, default='open')
+    state = fields.Selection([('open', "Ouverte"), ('closed', "Clôturée")], string="État", required=True,
+                             default='open', tracking=True)
     closed_uid = fields.Many2one('res.users', string="Clôturée par", readonly=True)
     closed_date = fields.Datetime("Clôturée le", readonly=True)
     skipped_count = fields.Integer("Modifications ignorées", readonly=True,

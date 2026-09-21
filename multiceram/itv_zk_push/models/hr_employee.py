@@ -4,12 +4,17 @@ from odoo.exceptions import UserError
 
 
 class HrEmployee(models.Model):
-    _inherit = 'hr.employee'
+    _inherit = ['hr.employee', 'itv.audit.mixin']
+    _name = 'hr.employee'
+
+    # Ce qui part vers la pointeuse est suivi dans la discussion de la fiche.
+    barcode = fields.Char(tracking=True)
+    pin = fields.Char(tracking=True)
 
     # Le PIN envoyé à la pointeuse est le « Code PIN » natif d'Odoo (celui du mode kiosque) :
     # un seul code par employé, quel que soit l'endroit où il pointe.
     itv_card_no = fields.Char(
-        "N° de carte", groups='hr.group_hr_user', copy=False,
+        "N° de carte", groups='hr.group_hr_user', copy=False, tracking=True,
         help="Numéro du badge RFID tel que la pointeuse le lit. Le plus sûr : enrôler la carte sur la "
              "pointeuse (Utilisateur → Carte → passer la carte), il revient ici à la synchronisation. "
              "Sinon, saisir le numéro imprimé sur la carte.")

@@ -24,10 +24,43 @@
         </field>
     </record>
 
+    <record id="itv_attendance_period_view_form" model="ir.ui.view">
+        <field name="name">itv.attendance.period.form</field>
+        <field name="model">itv.attendance.period</field>
+        <field name="arch" type="xml">
+            <form string="Période de pointage">
+                <header>
+                    <button name="action_close" type="object" string="Clôturer" class="btn-primary"
+                            invisible="state == 'closed'"/>
+                    <button name="action_open" type="object" string="Rouvrir" invisible="state == 'open'"/>
+                    <button name="action_recompute" type="object" string="Recalculer le mois"/>
+                    <field name="state" widget="statusbar"/>
+                </header>
+                <sheet>
+                    <div class="oe_title">
+                        <h1><field name="month" widget="date" options="{'format': 'MMMM yyyy'}"/></h1>
+                    </div>
+                    <group>
+                        <group>
+                            <field name="company_id" groups="base.group_multi_company"/>
+                            <field name="closed_uid" widget="many2one_avatar_user" readonly="1"
+                                   invisible="state != 'closed'"/>
+                            <field name="closed_date" readonly="1" invisible="state != 'closed'"/>
+                        </group>
+                        <group>
+                            <field name="skipped_count" readonly="1"/>
+                        </group>
+                    </group>
+                </sheet>
+                <chatter/>
+            </form>
+        </field>
+    </record>
+
     <record id="itv_attendance_period_action" model="ir.actions.act_window">
         <field name="name">Périodes de pointage</field>
         <field name="res_model">itv.attendance.period</field>
-        <field name="view_mode">list</field>
+        <field name="view_mode">list,form</field>
         <field name="view_id" ref="itv_attendance_period_view_list"/>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">Aucune période</p>

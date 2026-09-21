@@ -25,11 +25,12 @@ STEPS = ('itv_validated_1', 'itv_validated_2', 'itv_refused')
 
 
 class HrAttendanceOvertimeLine(models.Model):
-    _inherit = 'hr.attendance.overtime.line'
+    _inherit = ['hr.attendance.overtime.line', 'itv.audit.mixin']
+    _name = 'hr.attendance.overtime.line'
 
     itv_day_id = fields.Many2one('itv.attendance.day', string="Journée de pointage", readonly=True, copy=False,
                                  index='btree_not_null', ondelete='set null')
-    itv_state = fields.Selection(ITV_STATES, string="Statut", copy=False, index='btree_not_null',
+    itv_state = fields.Selection(ITV_STATES, string="Statut", copy=False, index='btree_not_null', tracking=True,
                                  help="Étape de validation MultiCeram ; vide pour les heures supplémentaires natives.")
     itv_rate = fields.Selection(ITV_RATES, string="Taux")
     itv_submitted_uid = fields.Many2one('res.users', string="Demandée par", readonly=True, copy=False)
@@ -229,6 +230,7 @@ class HrAttendanceOvertimeLine(models.Model):
         for step in STEPS:
             vals.update({step + '_uid': False, step + '_date': False})
         lines.sudo().with_context(itv_overtime_sync=True).write(vals)
+        lines._itv_audit(_("Remises en validation"))
 
     def _itv_day_lines(self):
         """Le circuit porte sur la journée : toutes les lignes (tous taux) du même employé et du même jour."""
@@ -273,6 +275,12 @@ class HrAttendanceOvertimeLine(models.Model):
             prefix + '_uid': self.env.uid,
             prefix + '_date': fields.Datetime.now(),
         })
+        label = dict(ITV_STATES)[state]
+        for line in self:
+            line._itv_audit(label, _("%(hours)s h au taux %(rate)s %%, sur %(detected)s h détectées",
+                                     hours=("%.2f" % line.duration).replace('.', ','),
+                                     rate=line.itv_rate or '',
+                                     detected=("%.2f" % line.itv_system_hours).replace('.', ',')))
 
     def _itv_employee_dates(self):
         return [(line.employee_id.id, line.date) for line in self]

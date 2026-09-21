@@ -78,6 +78,7 @@ class HrAttendanceOvertimeLine(models.Model):
         return action
 
     def _itv_ask_declaration(self, question=False):
+        self._itv_audit(_("Heures demandées à l'employé"), question)
         return self.sudo().write({
             'itv_declaration_state': 'asked',
             'itv_declaration_question': question or False,
@@ -93,6 +94,8 @@ class HrAttendanceOvertimeLine(models.Model):
         """Réponse de l'employé : appelée en sudo après contrôle d'appartenance."""
         if hours < 0:
             raise UserError(_("Indiquez un nombre d'heures positif."))
+        self._itv_audit(_("Heures déclarées par l'employé"),
+                        _("%(hours)s h déclarées. %(note)s", hours=("%.2f" % hours).replace('.', ','), note=note or ''))
         return self.write({
             'itv_declared_hours': hours,
             'itv_declared_note': note or False,

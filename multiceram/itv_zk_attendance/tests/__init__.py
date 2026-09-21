@@ -6,3 +6,4 @@ from . import test_overtime_circuit
 from . import test_rest_day_anomaly
 from . import test_reports
 from . import test_work_schedules
+from . import test_audit_trail

@@ -52,11 +52,16 @@ class ZkOutbox(models.Model):
                         'state': 'confirmed', 'biotime_ref': str(biotime_id),
                         'sent_at': fields.Datetime.now(), 'attempts': entry.attempts + 1, 'last_error': False,
                     })
+                    employee._itv_audit(
+                        _("Envoyé vers BioTime"),
+                        _("Connexion %(backend)s, identifiant BioTime %(ref)s",
+                          backend=entry.backend_id.display_name, ref=biotime_id))
             except Exception as error:
                 message = str(error)[:500]
                 logger.warning("Envoi BioTime de l'employé %s : %s", employee.display_name, message)
                 entry.write({'state': 'error', 'attempts': entry.attempts + 1, 'last_error': message})
                 employee.write({'itv_push_state': 'error', 'itv_push_error': message})
+                employee._itv_audit(_("Envoi vers BioTime refusé"), message)
 
     @api.model
     def _cron_process_employees(self, limit=50):
