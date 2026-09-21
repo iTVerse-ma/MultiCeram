@@ -255,7 +255,8 @@
         <field name="view_id" ref="itv_attendance_view_list"/>
         <field name="search_view_id" ref="itv_attendance_view_search"/>
         <field name="domain">[('itv_anomaly_state', '!=', False)]</field>
-        <field name="context">{'search_default_today_yesterday': 1}</field>
+        <!-- Ouvre sur ce qui reste à traiter : les deux filtres se retirent d'un clic. -->
+        <field name="context">{'search_default_anomaly_open': 1, 'search_default_today_yesterday': 1}</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">Aucune anomalie à traiter</p>
             <p>Pointages de présence ou de porte impairs, employés détectés présents sans pointage de présence, présences non reportées. Ajoutez le pointage manquant, ou justifiez / ignorez l'anomalie.</p>
