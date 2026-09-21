@@ -77,18 +77,15 @@
         <field name="model">hr.attendance</field>
         <field name="inherit_id" ref="hr_attendance.hr_attendance_view_form"/>
         <field name="arch" type="xml">
+            <!-- L'entête ne porte que les décisions du moment ; les outils sont dans le menu Action
+                 (l'engrenage à côté du titre), pour ne pas noyer le bouton qui compte. -->
             <xpath expr="//header" position="inside">
                 <button name="%(itv_attendance_anomaly_wizard_action)d" type="action" string="Traiter l'anomalie"
                         class="btn-primary" invisible="itv_anomaly_state != 'open'"/>
                 <button name="action_itv_reopen_anomaly" type="object" string="Rouvrir l'anomalie"
                         invisible="itv_anomaly_state not in ('justified', 'ignored')"/>
                 <button name="action_itv_propose_overtime" type="object" string="Proposer les heures supplémentaires"
-                        invisible="itv_overtime_state or itv_error"/>
-                <button name="action_itv_open_punches" type="object" string="Pointages de la journée"/>
-                <button name="action_itv_add_punch" type="object" string="Ajouter un pointage"/>
-                <button name="action_itv_new_leave" type="object" string="Nouveau congé"/>
-                <button name="action_itv_toggle_rest_day" type="object" string="Jour de repos"/>
-                <button name="action_itv_recompute" type="object" string="Recalculer"/>
+                        invisible="itv_overtime_state or itv_error or itv_is_marker"/>
                 <button name="action_itv_drop_override" type="object" string="Reprendre les heures calculées"
                         invisible="not itv_manual_override"/>
             </xpath>
@@ -246,6 +243,52 @@
     <record id="hr_attendance.hr_attendance_reporting" model="ir.actions.act_window">
         <field name="view_mode">pivot</field>
         <field name="view_id" ref="itv_attendance_view_pivot"/>
+    </record>
+
+    <!-- Outils de la journée : menu Action, sur la liste comme sur la fiche. -->
+    <record id="itv_attendance_action_open_punches" model="ir.actions.server">
+        <field name="name">Pointages de la journée</field>
+        <field name="model_id" ref="hr_attendance.model_hr_attendance"/>
+        <field name="binding_model_id" ref="hr_attendance.model_hr_attendance"/>
+        <field name="binding_view_types">list,form</field>
+        <field name="state">code</field>
+        <field name="code">action = records.action_itv_open_punches()</field>
+    </record>
+
+    <record id="itv_attendance_action_add_punch" model="ir.actions.server">
+        <field name="name">Ajouter un pointage</field>
+        <field name="model_id" ref="hr_attendance.model_hr_attendance"/>
+        <field name="binding_model_id" ref="hr_attendance.model_hr_attendance"/>
+        <field name="binding_view_types">list,form</field>
+        <field name="state">code</field>
+        <field name="code">action = records.action_itv_add_punch()</field>
+    </record>
+
+    <record id="itv_attendance_action_new_leave" model="ir.actions.server">
+        <field name="name">Nouveau congé</field>
+        <field name="model_id" ref="hr_attendance.model_hr_attendance"/>
+        <field name="binding_model_id" ref="hr_attendance.model_hr_attendance"/>
+        <field name="binding_view_types">list,form</field>
+        <field name="state">code</field>
+        <field name="code">action = records.action_itv_new_leave()</field>
+    </record>
+
+    <record id="itv_attendance_action_toggle_rest_day" model="ir.actions.server">
+        <field name="name">Jour de repos (poser / retirer)</field>
+        <field name="model_id" ref="hr_attendance.model_hr_attendance"/>
+        <field name="binding_model_id" ref="hr_attendance.model_hr_attendance"/>
+        <field name="binding_view_types">list,form</field>
+        <field name="state">code</field>
+        <field name="code">records.action_itv_toggle_rest_day()</field>
+    </record>
+
+    <record id="itv_attendance_action_recompute" model="ir.actions.server">
+        <field name="name">Recalculer la journée</field>
+        <field name="model_id" ref="hr_attendance.model_hr_attendance"/>
+        <field name="binding_model_id" ref="hr_attendance.model_hr_attendance"/>
+        <field name="binding_view_types">list,form</field>
+        <field name="state">code</field>
+        <field name="code">records.action_itv_recompute()</field>
     </record>
 
     <record id="itv_attendance_action_anomalies" model="ir.actions.act_window">
