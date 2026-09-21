@@ -6,9 +6,9 @@
         <field name="arch" type="xml">
             <list string="Heures supplémentaires" default_order="date desc, employee_id">
                 <header>
-                    <button name="action_itv_validate_1" type="object" string="Valider N1" class="btn-primary" groups="itv_zk_attendance.group_itv_overtime_validation_1"/>
-                    <button name="action_itv_validate_2" type="object" string="Valider N2" groups="itv_zk_attendance.group_itv_overtime_validation_2"/>
-                    <button name="action_itv_refuse" type="object" string="Refuser" groups="itv_zk_attendance.group_itv_overtime_validation_1"/>
+                    <button name="action_itv_validate_1" type="object" string="Valider N1" class="btn-primary"/>
+                    <button name="action_itv_validate_2" type="object" string="Valider N2"/>
+                    <button name="action_itv_refuse" type="object" string="Refuser"/>
                     <button name="action_itv_reset" type="object" string="Remettre en validation"/>
                 </header>
                 <field name="date" readonly="itv_state != 'submitted'"/>
@@ -24,14 +24,20 @@
                 <field name="itv_validated_2_uid" widget="many2one_avatar_user" optional="show"/>
                 <field name="itv_validated_2_date" optional="hide"/>
                 <field name="itv_refused_uid" widget="many2one_avatar_user" optional="hide"/>
+                <field name="itv_validator_1_id" widget="many2one_avatar_user" optional="hide"/>
+                <field name="itv_validator_2_id" widget="many2one_avatar_user" optional="hide"/>
+                <field name="itv_can_validate_1" column_invisible="True"/>
+                <field name="itv_can_validate_2" column_invisible="True"/>
+                <field name="itv_can_refuse" column_invisible="True"/>
+                <field name="itv_can_reset" column_invisible="True"/>
                 <button name="action_itv_validate_1" type="object" icon="fa-check" title="Valider N1 (toute la journée de cet employé)"
-                        invisible="itv_state != 'submitted'" groups="itv_zk_attendance.group_itv_overtime_validation_1"/>
+                        invisible="not itv_can_validate_1"/>
                 <button name="action_itv_validate_2" type="object" icon="fa-check-circle" title="Valider N2 (toute la journée de cet employé)"
-                        invisible="itv_state != 'validated_1'" groups="itv_zk_attendance.group_itv_overtime_validation_2"/>
+                        invisible="not itv_can_validate_2"/>
                 <button name="action_itv_refuse" type="object" icon="fa-times" title="Refuser (toute la journée de cet employé)"
-                        invisible="itv_state not in ('submitted', 'validated_1')" groups="itv_zk_attendance.group_itv_overtime_validation_1"/>
+                        invisible="not itv_can_refuse"/>
                 <button name="action_itv_reset" type="object" icon="fa-undo" title="Remettre en validation"
-                        invisible="itv_state not in ('validated_1', 'refused')"/>
+                        invisible="not itv_can_reset"/>
             </list>
         </field>
     </record>
@@ -43,14 +49,16 @@
             <form string="Heures supplémentaires">
                 <header>
                     <button name="action_itv_validate_1" type="object" string="Valider N1" class="btn-primary"
-                            invisible="itv_state != 'submitted'" groups="itv_zk_attendance.group_itv_overtime_validation_1"/>
+                            invisible="not itv_can_validate_1"/>
                     <button name="action_itv_validate_2" type="object" string="Valider N2" class="btn-primary"
-                            invisible="itv_state != 'validated_1'" groups="itv_zk_attendance.group_itv_overtime_validation_2"/>
-                    <button name="action_itv_refuse" type="object" string="Refuser"
-                            invisible="itv_state not in ('submitted', 'validated_1')"
-                            groups="itv_zk_attendance.group_itv_overtime_validation_1"/>
+                            invisible="not itv_can_validate_2"/>
+                    <button name="action_itv_refuse" type="object" string="Refuser" invisible="not itv_can_refuse"/>
                     <button name="action_itv_reset" type="object" string="Remettre en validation"
-                            invisible="itv_state not in ('validated_1', 'refused')"/>
+                            invisible="not itv_can_reset"/>
+                    <field name="itv_can_validate_1" invisible="1"/>
+                    <field name="itv_can_validate_2" invisible="1"/>
+                    <field name="itv_can_refuse" invisible="1"/>
+                    <field name="itv_can_reset" invisible="1"/>
                     <field name="itv_state" widget="statusbar" statusbar_visible="submitted,validated_1,validated_2"/>
                 </header>
                 <div class="alert alert-info mb-0" role="alert" invisible="itv_state in (False, 'submitted')">
@@ -117,6 +125,13 @@
                 <filter string="À valider N2" name="validated_1" domain="[('itv_state', '=', 'validated_1')]"/>
                 <filter string="Validées" name="validated_2" domain="[('itv_state', '=', 'validated_2')]"/>
                 <filter string="Refusées" name="refused" domain="[('itv_state', '=', 'refused')]"/>
+                <separator/>
+                <filter string="À valider par moi (N1)" name="my_n1"
+                        domain="[('itv_state', '=', 'submitted'), ('itv_validator_1_id', '=', uid)]"/>
+                <filter string="À valider par moi (N2)" name="my_n2"
+                        domain="[('itv_state', '=', 'validated_1'), ('itv_validator_2_id', '=', uid)]"/>
+                <filter string="Sans responsable dans l'organigramme" name="no_validator"
+                        domain="['|', ('itv_validator_1_id', '=', False), ('itv_validator_2_id', '=', False)]"/>
                 <separator/>
                 <filter string="Date" name="date" date="date"/>
                 <group>

@@ -13,7 +13,8 @@ Extension de l'application Présences :
     'author': "iTVerse",
     'website': "https://itverse.ma",
     'category': 'Human Resources/Attendances',
-    'version': '19.0.2.0.0',
+    'version': '19.0.2.2.1',
+    'post_init_hook': 'post_init_hook',
     'license': 'LGPL-3',
 
     'depends': [

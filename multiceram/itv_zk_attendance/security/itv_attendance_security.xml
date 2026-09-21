@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="utf-8"?>
 <odoo>
-    <!-- Un seul niveau d'accès « Présences » : Employé, Responsable N1, Responsable N2, Administrateur. -->
+    <!-- Trois niveaux d'accès « Présences » : Employé, Responsable, Administrateur.
+         Le niveau de validation (N1 ou N2) n'est plus un droit : il découle de la place du
+         responsable dans l'organigramme, et la même personne peut être N1 ici et N2 plus bas. -->
     <record id="hr_attendance.group_hr_attendance_own_reader" model="res.groups">
         <field name="name">Employé</field>
         <field name="sequence">5</field>
@@ -18,25 +20,17 @@
     </record>
 
     <record id="group_itv_overtime_validation_1" model="res.groups">
-        <field name="name">Responsable N1</field>
+        <field name="name">Responsable</field>
         <field name="sequence">10</field>
         <field name="privilege_id" ref="hr_attendance.res_groups_privilege_attendances"/>
         <field name="implied_ids" eval="[(6, 0, [ref('hr_attendance.group_hr_attendance_officer')])]"/>
-        <field name="comment">Gère les présences de ses employés et valide les heures supplémentaires au premier niveau.</field>
-    </record>
-
-    <record id="group_itv_overtime_validation_2" model="res.groups">
-        <field name="name">Responsable N2</field>
-        <field name="sequence">20</field>
-        <field name="privilege_id" ref="hr_attendance.res_groups_privilege_attendances"/>
-        <field name="implied_ids" eval="[(6, 0, [ref('group_itv_overtime_validation_1'), ref('hr_attendance.group_hr_attendance_user')])]"/>
-        <field name="comment">Voit toutes les présences et valide au second niveau les heures déjà validées par un responsable N1.</field>
+        <field name="comment">Voit les présences des employés qui dépendent de lui dans l'organigramme, à tous les niveaux, et valide leurs heures supplémentaires là où l'organigramme le place : N1 pour ses employés directs, N2 pour ceux de ses propres responsables.</field>
     </record>
 
     <record id="hr_attendance.group_hr_attendance_manager" model="res.groups">
         <field name="name">Administrateur</field>
         <field name="sequence">30</field>
-        <field name="implied_ids" eval="[(4, ref('group_itv_overtime_validation_2')), (4, ref('base.group_system'))]"/>
+        <field name="implied_ids" eval="[(4, ref('group_itv_overtime_validation_1')), (4, ref('hr_attendance.group_hr_attendance_user')), (4, ref('base.group_system'))]"/>
         <field name="comment">Tout : configuration, périodes, recalculs, validations, et attribution des accès (Paramètres).</field>
     </record>
 
@@ -46,34 +40,58 @@
         <field name="domain_force">[('company_id', 'in', company_ids)]</field>
     </record>
 
+    <!-- Visibilité par l'organigramme : un responsable voit sa propre fiche et tous ceux qui
+         dépendent de lui, directement ou par ses propres responsables. Les règles natives
+         « toutes les présences » et « employés gérés » sont ramenées à ce périmètre ; seul
+         l'Administrateur garde une vue complète. -->
     <record id="itv_attendance_day_rule_all" model="ir.rule">
-        <field name="name">Journée de pointage : tous les employés</field>
+        <field name="name">Journée de pointage : mon équipe (organigramme)</field>
         <field name="model_id" ref="model_itv_attendance_day"/>
-        <field name="domain_force">[(1, '=', 1)]</field>
-        <field name="groups" eval="[(4, ref('hr_attendance.group_hr_attendance_user'))]"/>
+        <field name="domain_force">['|', ('employee_id.user_id', '=', user.id), ('employee_id', 'child_of', user.employee_ids.ids)]</field>
+        <field name="groups" eval="[(6, 0, [ref('hr_attendance.group_hr_attendance_officer')])]"/>
     </record>
 
     <record id="itv_attendance_day_rule_officer" model="ir.rule">
-        <field name="name">Journée de pointage : employés gérés</field>
+        <field name="name">Journée de pointage : administrateur</field>
         <field name="model_id" ref="model_itv_attendance_day"/>
-        <field name="domain_force">[('employee_id.attendance_manager_id', '=', user.id)]</field>
-        <field name="groups" eval="[(4, ref('hr_attendance.group_hr_attendance_officer'))]"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(6, 0, [ref('hr_attendance.group_hr_attendance_manager')])]"/>
     </record>
 
     <record id="itv_attendance_day_rule_validation" model="ir.rule">
-        <field name="name">Journée de pointage : valideurs des heures supplémentaires</field>
+        <field name="name">Journée de pointage : mes propres journées</field>
         <field name="model_id" ref="model_itv_attendance_day"/>
-        <field name="domain_force">[(1, '=', 1)]</field>
-        <field name="groups" eval="[(4, ref('group_itv_overtime_validation_1'))]"/>
+        <field name="domain_force">[('employee_id.user_id', '=', user.id)]</field>
+        <field name="groups" eval="[(6, 0, [ref('hr_attendance.group_hr_attendance_own_reader')])]"/>
         <field name="perm_write" eval="False"/>
         <field name="perm_create" eval="False"/>
         <field name="perm_unlink" eval="False"/>
     </record>
 
     <record id="itv_overtime_line_rule_validation" model="ir.rule">
-        <field name="name">Heures supplémentaires : valideurs du circuit</field>
+        <field name="name">Heures supplémentaires : circuit MultiCeram</field>
         <field name="model_id" ref="hr_attendance.model_hr_attendance_overtime_line"/>
         <field name="domain_force">[('itv_state', '!=', False)]</field>
         <field name="groups" eval="[(4, ref('group_itv_overtime_validation_1'))]"/>
+    </record>
+
+    <!-- L'Administrateur garde une vue complète malgré les règles ci-dessus. -->
+    <record id="itv_attendance_rule_admin_all" model="ir.rule">
+        <field name="name">Présences : administrateur</field>
+        <field name="model_id" ref="hr_attendance.model_hr_attendance"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(6, 0, [ref('hr_attendance.group_hr_attendance_manager')])]"/>
+    </record>
+    <record id="itv_overtime_line_rule_admin_all" model="ir.rule">
+        <field name="name">Heures supplémentaires : administrateur</field>
+        <field name="model_id" ref="hr_attendance.model_hr_attendance_overtime_line"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(6, 0, [ref('hr_attendance.group_hr_attendance_manager')])]"/>
+    </record>
+    <record id="itv_zk_punch_rule_admin_all" model="ir.rule">
+        <field name="name">Pointage brut : administrateur</field>
+        <field name="model_id" ref="itv_zk_connector.model_itv_zk_punch"/>
+        <field name="domain_force">[(1, '=', 1)]</field>
+        <field name="groups" eval="[(6, 0, [ref('hr_attendance.group_hr_attendance_manager')])]"/>
     </record>
 </odoo>

@@ -125,37 +125,39 @@ class HrAttendanceOvertimeLine(models.Model):
     # -- Circuit de validation ---------------------------------------------------------------------
 
     def action_itv_validate_1(self):
-        self._itv_check_group('itv_zk_attendance.group_itv_overtime_validation_1')
         lines = self._itv_day_lines()
+        lines._itv_check_validator(1)
         lines._itv_check_states(('submitted',), _("Seules les heures supplémentaires en cours de validation peuvent être validées au niveau 1."))
         lines._itv_step('validated_1', 'itv_validated_1')
 
     def action_itv_validate_2(self):
-        self._itv_check_group('itv_zk_attendance.group_itv_overtime_validation_2')
         lines = self._itv_day_lines()
+        lines._itv_check_validator(2)
         lines._itv_check_states(('validated_1',), _("Seules les heures supplémentaires validées au niveau 1 peuvent être validées au niveau 2."))
         if not self._itv_separation_exempt() and lines.filtered(lambda line: line.itv_validated_1_uid == self.env.user):
             raise UserError(_("La validation de niveau 2 doit être faite par une autre personne que la validation de niveau 1."))
         lines._itv_step('validated_2', 'itv_validated_2')
 
     def _itv_separation_exempt(self):
-        """Recette : le compte Administrateur peut enchaîner N1 puis N2 pour dérouler le circuit seul.
+        """Recette : le compte Administrateur agit à tous les niveaux pour dérouler le circuit seul.
 
-        La séparation des validateurs reste imposée à tout le monde d'autre. À retirer le jour où
-        deux comptes de validation existent chez le client.
+        Tout le monde d'autre suit l'organigramme, N1 puis N2, par deux personnes différentes.
+        À retirer le jour où les responsables du client sont en place.
         """
         admin = self.env.ref('base.user_admin', raise_if_not_found=False)
         return self.env.user.id == SUPERUSER_ID or (admin and self.env.user == admin)
 
     def action_itv_refuse(self):
-        self._itv_check_group('itv_zk_attendance.group_itv_overtime_validation_1')
         lines = self._itv_day_lines()
+        lines._itv_check_validator(1 if lines[:1].itv_state == 'submitted' else 2)
         lines._itv_check_states(('submitted', 'validated_1'), _("Seules les heures supplémentaires en cours de validation peuvent être refusées."))
         lines._itv_step('refused', 'itv_refused')
 
     def action_itv_reset(self):
         """Remet la journée en cours de validation : correction d'un refus ou d'une validation à revoir."""
         lines = self._itv_day_lines()
+        if not lines.filtered('itv_can_reset') and not self._itv_separation_exempt():
+            raise AccessError(_("Seuls les responsables N1 et N2 de l'employé peuvent remettre ces heures en validation."))
         lines._itv_check_states(('validated_1', 'refused'), _("Seules les heures supplémentaires validées au niveau 1, ou refusées, peuvent être remises en validation."))
         vals = {'itv_state': 'submitted'}
         for step in STEPS:
@@ -179,9 +181,25 @@ class HrAttendanceOvertimeLine(models.Model):
         if not self or self.filtered(lambda line: line.itv_state not in states):
             raise UserError(message)
 
-    def _itv_check_group(self, xmlid):
-        if not self.env.user.has_group(xmlid):
-            raise AccessError(_("Vous n'avez pas le droit de valider ces heures supplémentaires à ce niveau."))
+    def _itv_check_validator(self, level):
+        """Seul le responsable du niveau demandé valide, d'après l'organigramme.
+
+        Une journée dont l'employé n'a pas de responsable (ou dont le responsable n'en a pas)
+        n'a personne pour la valider : elle n'apparaît d'ailleurs à personne.
+        """
+        if self._itv_separation_exempt():
+            return
+        field = 'itv_validator_%s_id' % level
+        foreign = self.filtered(lambda line: line[field] != self.env.user)
+        if foreign:
+            line = foreign[0]
+            if not line[field]:
+                raise AccessError(_("%(employee)s n'a pas de responsable N%(level)s dans l'organigramme : "
+                                    "personne ne peut valider ces heures.",
+                                    employee=line.employee_id.display_name, level=level))
+            raise AccessError(_("La validation N%(level)s de %(employee)s revient à %(user)s.",
+                                level=level, employee=line.employee_id.display_name,
+                                user=line[field].display_name))
 
     def _itv_step(self, state, prefix):
         self.sudo().with_context(itv_overtime_sync=True).write({

@@ -36,7 +36,8 @@ class TestLegacyRecompute(TransactionCase):
     def test_imported_punches_are_recomputed_into_days(self):
         punches = self._punch('2025-11-03 07:58:00', self.entry) | self._punch('2025-11-03 18:10:00', self.exit)
         punches._on_punches_imported()
-        self.assertEqual(self.Dirty.search_count([('employee_id', '=', self.employee.id)]), 1)
+        # La journée et ses voisines : un poste de nuit prend les sorties du jour suivant.
+        self.assertEqual(self.Dirty.search_count([('employee_id', '=', self.employee.id)]), 3)
 
         self.Dirty._cron_recompute()
         days = self.Day.search([('employee_id', '=', self.employee.id)])
@@ -68,11 +69,11 @@ class TestLegacyRecompute(TransactionCase):
         # retenus de tout usage, même sans aucun pointage de présence.
         self.assertAlmostEqual(monday.lg_heures, 9.0, places=4)
 
-    def test_raw_punch_correction_requeues_the_month(self):
+    def test_raw_punch_correction_requeues_the_day_and_its_neighbours(self):
         punch = self._punch('2025-11-03 07:58:00', self.entry)
         self.Dirty.search([]).unlink()
         punch.duplicate = True
-        self.assertEqual(self.Dirty.search_count([('employee_id', '=', self.employee.id)]), 1)
+        self.assertEqual(self.Dirty.search_count([('employee_id', '=', self.employee.id)]), 3)
 
     def test_month_where_the_original_page_crashed_is_flagged(self):
         (self._punch('2025-11-03 23:46:00', self.entry) | self._punch('2025-11-03 23:59:00', self.exit))._on_punches_imported()
