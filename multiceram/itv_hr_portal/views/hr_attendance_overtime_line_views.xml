@@ -14,7 +14,7 @@
                        decoration-info="itv_declaration_state == 'asked'"
                        decoration-primary="itv_declaration_state == 'answered'"/>
             </xpath>
-            <xpath expr="//button[@name='action_itv_validate_1']" position="before">
+            <xpath expr="//list/button[@name='action_itv_validate_1']" position="before">
                 <button name="action_itv_ask_declaration" type="object" icon="fa-question-circle"
                         title="Demander à l'employé combien d'heures il a faites"
                         invisible="itv_state not in ('submitted', 'validated_1') or itv_declaration_state == 'asked'"/>
