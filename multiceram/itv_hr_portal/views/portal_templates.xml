@@ -287,6 +287,32 @@
                 Aucune heure supplémentaire déclarée. Les heures sont mises en circuit par le service du personnel.
             </p>
 
+            <!-- Question du responsable : l'employé répond de mémoire, sans voir le calcul. -->
+            <div t-foreach="to_declare" t-as="ask" class="card border-warning mb-3">
+                <div class="card-body">
+                    <h6 class="card-title">
+                        Journée du <t t-out="ask.date" t-options="{'widget': 'date'}"/>
+                    </h6>
+                    <p class="mb-2" t-out="ask.itv_declaration_question or 'Combien d\'heures supplémentaires avez-vous faites ce jour-là ?'"/>
+                    <form t-attf-action="/my/heures-supplementaires/#{ask.id}/declarer" method="post" class="row g-2">
+                        <input type="hidden" name="csrf_token" t-att-value="request.csrf_token()"/>
+                        <div class="col-12 col-md-3">
+                            <label class="form-label small" t-attf-for="hours-#{ask.id}">Heures faites</label>
+                            <input type="number" step="0.25" min="0" max="24" class="form-control" required="required"
+                                   t-attf-id="hours-#{ask.id}" name="hours" placeholder="ex. 2.5"/>
+                        </div>
+                        <div class="col-12 col-md-7">
+                            <label class="form-label small" t-attf-for="note-#{ask.id}">Précision (facultatif)</label>
+                            <input type="text" class="form-control" t-attf-id="note-#{ask.id}" name="note"
+                                   placeholder="ex. inventaire de fin de mois"/>
+                        </div>
+                        <div class="col-12 col-md-2 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary w-100">Envoyer</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
             <div t-foreach="months" t-as="month" class="mb-4">
                 <h5 t-out="month[0]" t-options="{'widget': 'date', 'format': 'MMMM yyyy'}"/>
                 <table class="table table-sm">
@@ -297,12 +323,19 @@
                         <tr t-foreach="month[1]" t-as="line">
                             <td t-out="line.date" t-options="{'widget': 'date'}"/>
                             <td><t t-out="line.itv_rate or int((line.amount_rate - 1) * 100)"/> %</td>
-                            <td class="text-end" t-out="line.duration" t-options="{'widget': 'float_time'}"/>
+                            <td class="text-end">
+                                <span t-if="line.itv_declaration_state == 'asked'" class="text-muted">à déclarer</span>
+                                <t t-else="" t-out="line.duration" t-options="{'widget': 'float_time'}"/>
+                            </td>
                             <td>
                                 <span t-if="line.itv_state == 'validated_2'" class="badge text-bg-success">Validée</span>
                                 <span t-elif="line.itv_state == 'validated_1'" class="badge text-bg-info">Validée N1</span>
                                 <span t-elif="line.itv_state == 'submitted'" class="badge text-bg-warning">En circuit</span>
                                 <span t-elif="line.itv_state == 'refused'" class="badge text-bg-danger">Refusée</span>
+                                <span t-if="line.itv_declaration_state == 'asked'" class="badge text-bg-warning">À déclarer</span>
+                                <span t-elif="line.itv_declaration_state == 'answered'" class="badge text-bg-light">
+                                    Déclarée : <t t-out="line.itv_declared_hours" t-options="{'widget': 'float_time'}"/>
+                                </span>
                                 <span t-else="" class="badge text-bg-light">Brouillon</span>
                             </td>
                         </tr>

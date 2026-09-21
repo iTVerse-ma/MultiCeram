@@ -83,11 +83,15 @@
                             <field name="time_stop" readonly="itv_state != 'submitted'"/>
                             <field name="company_id" groups="base.group_multi_company"/>
                         </group>
-                        <group string="Demande">
+                        <group string="Demande" name="itv_request">
                             <field name="itv_submitted_uid" widget="many2one_avatar_user"/>
                             <field name="itv_submitted_date"/>
                         </group>
-                        <group string="Validations">
+                        <group string="Responsables (organigramme)" name="itv_validators">
+                            <field name="itv_validator_1_id" widget="many2one_avatar_user"/>
+                            <field name="itv_validator_2_id" widget="many2one_avatar_user"/>
+                        </group>
+                        <group string="Validations" name="itv_validations">
                             <field name="itv_validated_1_uid" widget="many2one_avatar_user"
                                    invisible="not itv_validated_1_uid"/>
                             <field name="itv_validated_1_date" invisible="not itv_validated_1_date"/>

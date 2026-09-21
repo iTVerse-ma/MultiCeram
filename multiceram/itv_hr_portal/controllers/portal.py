@@ -122,10 +122,31 @@ class ItvHrPortal(CustomerPortal):
         values.update(
             page_name='itv_overtime', employee=employee, lines=lines,
             months=sorted(months.items(), reverse=True),
+            to_declare=lines.filtered(lambda line: line.itv_declaration_state == 'asked'),
             validated_total=sum(lines.filtered(lambda l: l.itv_state == 'validated_2').mapped('duration')),
             pending_total=sum(lines.filtered(lambda l: l.itv_state in ('submitted', 'validated_1')).mapped('duration')),
         )
         return request.render('itv_hr_portal.portal_my_overtime', values)
+
+    @http.route(['/my/heures-supplementaires/<int:line_id>/declarer'], type='http', auth='user',
+                methods=['POST'], csrf=True, website=True)
+    def itv_portal_overtime_declare(self, line_id, **post):
+        """L'employé déclare ses heures : il répond sans avoir vu le calcul."""
+        employee = self._itv_employee()
+        line = request.env['hr.attendance.overtime.line'].sudo().browse(line_id).exists()
+        if not line or line.employee_id != employee or line.itv_declaration_state != 'asked':
+            return request.redirect('/my/heures-supplementaires')
+        try:
+            hours = float((post.get('hours') or '0').replace(',', '.'))
+        except ValueError:
+            hours = -1
+        if hours < 0:
+            return request.redirect('/my/heures-supplementaires?erreur=heures')
+        # Toute la journée de l'employé suit la même déclaration.
+        same_day = line.search([('employee_id', '=', employee.id), ('date', '=', line.date),
+                                ('itv_declaration_state', '=', 'asked')])
+        same_day._itv_portal_declare(hours, post.get('note'))
+        return request.redirect('/my/heures-supplementaires')
 
     # ----------------------------------------------------------------- congés
 

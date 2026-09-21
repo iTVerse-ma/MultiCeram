@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from odoo import SUPERUSER_ID, _, api, fields, models
-from odoo.exceptions import AccessError, UserError
+from odoo.exceptions import AccessError, UserError, ValidationError
 
 ITV_STATES = [
     ('submitted', "En cours de validation"),
@@ -40,6 +40,72 @@ class HrAttendanceOvertimeLine(models.Model):
     itv_validated_2_date = fields.Datetime("Validée N2 le", readonly=True, copy=False)
     itv_refused_uid = fields.Many2one('res.users', string="Refusée par", readonly=True, copy=False)
     itv_refused_date = fields.Datetime("Refusée le", readonly=True, copy=False)
+
+    # Le circuit suit l'organigramme : N1 = responsable de l'employé, N2 = responsable du N1.
+    itv_validator_1_id = fields.Many2one(
+        'res.users', string="Valideur N1", compute='_compute_itv_validators', store=True,
+        help="Utilisateur du responsable direct de l'employé, d'après l'organigramme.")
+    itv_validator_2_id = fields.Many2one(
+        'res.users', string="Valideur N2", compute='_compute_itv_validators', store=True,
+        help="Utilisateur du responsable du N1, d'après l'organigramme.")
+    itv_system_hours = fields.Float(
+        "Heures détectées", compute='_compute_itv_system_hours', store=True, readonly=True,
+        help="Heures supplémentaires calculées à partir des pointages pour cette journée et ce taux. "
+             "Elles plafonnent ce qui peut être validé : personne n'accorde plus que ce que la pointeuse a vu.")
+    itv_can_validate_1 = fields.Boolean(compute='_compute_itv_can_act')
+    itv_can_validate_2 = fields.Boolean(compute='_compute_itv_can_act')
+    itv_can_refuse = fields.Boolean(compute='_compute_itv_can_act')
+    itv_can_reset = fields.Boolean(compute='_compute_itv_can_act')
+
+    @api.depends('itv_day_id.lg_hs25', 'itv_day_id.lg_hs50', 'itv_rate')
+    def _compute_itv_system_hours(self):
+        for line in self:
+            day = line.itv_day_id
+            if not day or not line.itv_state:
+                line.itv_system_hours = 0.0
+            elif line.itv_rate == '50':
+                line.itv_system_hours = day.lg_hs50
+            elif line.itv_rate == '25':
+                line.itv_system_hours = day.lg_hs25
+            else:
+                # Taux 100 % : jamais issu du calcul, il vient d'une décision (jour férié, requalification).
+                line.itv_system_hours = 0.0
+
+    @api.constrains('duration', 'itv_rate')
+    def _check_itv_system_cap(self):
+        """Personne ne saisit plus d'heures que ce que les pointages montrent.
+
+        Le plafond ne s'applique qu'aux journées où le calcul a trouvé des heures : une journée
+        sans détection (anomalie requalifiée, saisie à la main) n'aurait sinon aucune HS possible.
+        Il porte sur ce qu'on saisit, pas sur l'historique : un recalcul qui ferait baisser les
+        heures détectées ne rend pas invalides des lignes déjà validées.
+        """
+        for line in self.filtered(lambda l: l.itv_state and l.itv_system_hours > 0):
+            if line.duration > line.itv_system_hours + 1e-4:
+                raise ValidationError(_(
+                    "%(employee)s, %(date)s : %(asked)s demandées pour %(detected)s détectées par les pointages. "
+                    "On ne peut pas valider plus que ce que la pointeuse a enregistré.",
+                    employee=line.employee_id.display_name, date=line.date,
+                    asked=("%02d:%02d" % (int(line.duration), round(line.duration % 1 * 60))),
+                    detected=("%02d:%02d" % (int(line.itv_system_hours), round(line.itv_system_hours % 1 * 60)))))
+
+    @api.depends('employee_id.parent_id.user_id', 'employee_id.parent_id.parent_id.user_id')
+    def _compute_itv_validators(self):
+        for line in self:
+            manager = line.employee_id.parent_id
+            line.itv_validator_1_id = manager.user_id
+            line.itv_validator_2_id = manager.parent_id.user_id
+
+    def _compute_itv_can_act(self):
+        """Boutons visibles pour la seule personne dont c'est le tour."""
+        user, exempt = self.env.user, self._itv_separation_exempt()
+        for line in self:
+            is_1 = exempt or line.itv_validator_1_id == user
+            is_2 = exempt or line.itv_validator_2_id == user
+            line.itv_can_validate_1 = line.itv_state == 'submitted' and is_1
+            line.itv_can_validate_2 = line.itv_state == 'validated_1' and is_2
+            line.itv_can_refuse = line.itv_state in ('submitted', 'validated_1') and (is_1 or is_2)
+            line.itv_can_reset = line.itv_state in ('validated_1', 'refused') and (is_1 or is_2)
 
     _itv_rate_uniq = models.UniqueIndex("(employee_id, date, itv_rate) WHERE itv_state IS NOT NULL",
                                         "Une seule ligne d'heures supplémentaires par employé, jour et taux.")

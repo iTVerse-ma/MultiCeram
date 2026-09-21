@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Heures supplémentaires : la déclaration de l'employé en face des heures détectées. -->
+    <record id="itv_overtime_line_view_list_portal" model="ir.ui.view">
+        <field name="name">hr.attendance.overtime.line.list.itv.portail</field>
+        <field name="model">hr.attendance.overtime.line</field>
+        <field name="inherit_id" ref="itv_zk_attendance.itv_overtime_line_view_list"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='itv_state']" position="before">
+                <field name="itv_system_hours" widget="float_time" optional="show"/>
+                <field name="itv_declared_hours" widget="float_time" optional="show"
+                       invisible="itv_declaration_state != 'answered'"/>
+                <field name="itv_declaration_state" widget="badge" optional="show"
+                       decoration-info="itv_declaration_state == 'asked'"
+                       decoration-primary="itv_declaration_state == 'answered'"/>
+            </xpath>
+            <xpath expr="//button[@name='action_itv_validate_1']" position="before">
+                <button name="action_itv_ask_declaration" type="object" icon="fa-question-circle"
+                        title="Demander à l'employé combien d'heures il a faites"
+                        invisible="itv_state not in ('submitted', 'validated_1') or itv_declaration_state == 'asked'"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="itv_overtime_line_view_form_portal" model="ir.ui.view">
+        <field name="name">hr.attendance.overtime.line.form.itv.portail</field>
+        <field name="model">hr.attendance.overtime.line</field>
+        <field name="inherit_id" ref="itv_zk_attendance.itv_overtime_line_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//header" position="inside">
+                <button name="action_itv_ask_declaration" type="object" string="Demander ses heures à l'employé"
+                        invisible="itv_state not in ('submitted', 'validated_1') or itv_declaration_state == 'asked'"/>
+            </xpath>
+            <xpath expr="//field[@name='amount_rate']" position="after">
+                <field name="itv_system_hours" widget="float_time"/>
+            </xpath>
+            <xpath expr="//group[@name='itv_request']" position="before">
+                <group string="Déclaration de l'employé" invisible="not itv_declaration_state">
+                    <field name="itv_declaration_state"/>
+                    <field name="itv_declaration_question"/>
+                    <field name="itv_declaration_date"/>
+                    <field name="itv_declared_hours" widget="float_time"
+                           invisible="itv_declaration_state != 'answered'"/>
+                    <field name="itv_declaration_gap" widget="float_time"
+                           invisible="itv_declaration_state != 'answered'"/>
+                    <field name="itv_declared_note" invisible="not itv_declared_note"/>
+                    <field name="itv_declared_answer_date" invisible="itv_declaration_state != 'answered'"/>
+                </group>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="itv_overtime_line_view_search_portal" model="ir.ui.view">
+        <field name="name">hr.attendance.overtime.line.search.itv.portail</field>
+        <field name="model">hr.attendance.overtime.line</field>
+        <field name="inherit_id" ref="itv_zk_attendance.itv_overtime_line_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//filter[@name='no_validator']" position="after">
+                <separator/>
+                <filter string="En attente de la déclaration de l'employé" name="declaration_asked"
+                        domain="[('itv_declaration_state', '=', 'asked')]"/>
+                <filter string="Déclarées par l'employé" name="declaration_answered"
+                        domain="[('itv_declaration_state', '=', 'answered')]"/>
+                <filter string="Déclaration inférieure au détecté" name="declaration_gap"
+                        domain="[('itv_declaration_state', '=', 'answered'), ('itv_declaration_gap', '&lt;', 0)]"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

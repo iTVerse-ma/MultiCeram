@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <record id="itv_overtime_declaration_wizard_view_form" model="ir.ui.view">
+        <field name="name">itv.overtime.declaration.wizard.form</field>
+        <field name="model">itv.overtime.declaration.wizard</field>
+        <field name="arch" type="xml">
+            <form string="Demander ses heures à l'employé">
+                <div class="alert alert-info" role="alert">
+                    L'employé répond depuis son portail sans voir le nombre d'heures calculé.
+                    Sa réponse revient ici, à côté des heures détectées, pour que vous décidiez.
+                </div>
+                <group>
+                    <field name="question" placeholder="Combien d'heures supplémentaires avez-vous faites ce jour-là ?"/>
+                </group>
+                <footer>
+                    <button name="action_send" type="object" string="Envoyer à l'employé" class="btn-primary"/>
+                    <button string="Annuler" class="btn-secondary" special="cancel"/>
+                </footer>
+            </form>
+        </field>
+    </record>
+
+    <record id="itv_overtime_declaration_wizard_action" model="ir.actions.act_window">
+        <field name="name">Demander ses heures à l'employé</field>
+        <field name="res_model">itv.overtime.declaration.wizard</field>
+        <field name="view_mode">form</field>
+        <field name="target">new</field>
+    </record>
+</odoo>
