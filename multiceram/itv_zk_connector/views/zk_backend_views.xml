@@ -4,10 +4,11 @@
         <field name="name">itv.zk.backend.list</field>
         <field name="model">itv.zk.backend</field>
         <field name="arch" type="xml">
-            <list string="Connexions BioTime">
+            <list string="Connexions">
                 <field name="name"/>
+                <field name="kind"/>
                 <field name="url"/>
-                <field name="read_only"/>
+                <field name="read_only" invisible="kind != 'biotime'"/>
                 <field name="status" widget="badge" decoration-success="status == 'ok'"
                        decoration-warning="status == 'degraded'" decoration-danger="status == 'down'"/>
                 <field name="company_id" groups="base.group_multi_company"/>
@@ -19,16 +20,16 @@
         <field name="name">itv.zk.backend.form</field>
         <field name="model">itv.zk.backend</field>
         <field name="arch" type="xml">
-            <form string="Connexion BioTime">
+            <form string="Connexion">
                 <header>
                     <button name="action_test_connection" type="object" string="Tester la connexion" class="btn-primary"/>
                     <button name="action_sync_now" type="object" string="Synchroniser maintenant"/>
                     <field name="status" widget="statusbar"/>
                 </header>
                 <div class="alert alert-danger mb-0" role="alert" invisible="status != 'down'">
-                    BioTime ne répond plus : les synchronisations sont suspendues quelques minutes puis reprennent seules.
+                    Le serveur ne répond plus : les synchronisations sont suspendues quelques minutes puis reprennent seules.
                 </div>
-                <div class="alert alert-info mb-0" role="alert" invisible="not read_only">
+                <div class="alert alert-info mb-0" role="alert" invisible="not read_only or kind != 'biotime'">
                     Lecture seule : Odoo lit BioTime mais n'y écrit rien.
                 </div>
                 <sheet>
@@ -42,23 +43,28 @@
                         <h1><field name="name" placeholder="ex. BioTime MultiCeram"/></h1>
                     </div>
                     <group>
+                        <group>
+                            <field name="kind" widget="radio" options="{'horizontal': true}"/>
+                        </group>
+                    </group>
+                    <group>
                         <group string="Serveur">
                             <field name="url" placeholder="http://192.168.1.120:8090/"/>
-                            <field name="auth_mode"/>
-                            <field name="username"/>
-                            <field name="password" password="True"/>
+                            <field name="auth_mode" invisible="kind != 'biotime'"/>
+                            <field name="username" invisible="kind != 'biotime'"/>
+                            <field name="password" password="True" invisible="kind != 'biotime'"/>
                             <field name="company_id" groups="base.group_multi_company"/>
                             <field name="active" invisible="1"/>
                         </group>
                         <group string="Synchronisation">
-                            <field name="read_only"/>
+                            <field name="read_only" invisible="kind != 'biotime'"/>
                             <field name="timezone"/>
-                            <field name="page_size"/>
-                            <field name="page_size_param"/>
+                            <field name="page_size" invisible="kind != 'biotime'"/>
+                            <field name="page_size_param" invisible="kind != 'biotime'"/>
                             <field name="initial_sync_days"/>
                             <field name="overlap_minutes"/>
-                            <field name="reconcile_days"/>
-                            <field name="offline_after_minutes"/>
+                            <field name="reconcile_days" invisible="kind != 'biotime'"/>
+                            <field name="offline_after_minutes" invisible="kind != 'biotime'"/>
                         </group>
                     </group>
                     <group string="Santé" invisible="not failure_count and not last_error">
@@ -67,7 +73,7 @@
                         <field name="last_error"/>
                     </group>
                     <notebook>
-                        <page string="États de synchronisation" name="sync_states">
+                        <page string="États de synchronisation" name="sync_states" invisible="kind != 'biotime'">
                             <field name="state_ids" readonly="1">
                                 <list>
                                     <field name="key"/>
@@ -76,7 +82,7 @@
                                 </list>
                             </field>
                         </page>
-                        <page string="Comment remplir cette fiche" name="howto">
+                        <page string="Comment remplir cette fiche" name="howto" invisible="kind != 'biotime'">
                             <div class="mt16">
                                 <h4>1. URL du serveur</h4>
                                 <p>L'adresse avec laquelle vous ouvrez BioTime dans un navigateur, port compris :
@@ -119,11 +125,11 @@
     </record>
 
     <record id="itv_zk_backend_action" model="ir.actions.act_window">
-        <field name="name">Connexions BioTime</field>
+        <field name="name">Connexions</field>
         <field name="res_model">itv.zk.backend</field>
         <field name="view_mode">list,form</field>
         <field name="help" type="html">
-            <p class="o_view_nocontent_smiling_face">Déclarer un serveur BioTime</p>
+            <p class="o_view_nocontent_smiling_face">Déclarer un serveur de pointage</p>
             <p>Renseignez l'URL et un utilisateur API dédié, testez la connexion, puis désactivez la lecture seule quand les écritures vers BioTime sont validées.</p>
         </field>
     </record>

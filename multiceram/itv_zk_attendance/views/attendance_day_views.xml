@@ -15,6 +15,9 @@
                 </header>
                 <field name="date"/>
                 <field name="weekday" string="Jour" optional="show"/>
+                <field name="itv_calendar_id" string="Horaire" optional="show"/>
+                <field name="itv_late_minutes" string="Retard (min)" optional="hide"/>
+                <field name="itv_early_minutes" string="Départ anticipé (min)" optional="hide"/>
                 <field name="employee_id" widget="many2one_avatar_employee"/>
                 <field name="department_id" optional="hide"/>
                 <field name="punch_summary" string="Pointages"/>
@@ -84,6 +87,11 @@
                             <field name="lg_clean_count"/>
                             <field name="lg_carried_count"/>
                             <field name="department_id"/>
+                        </group>
+                        <group string="Horaire">
+                            <field name="itv_calendar_id"/>
+                            <field name="itv_late_minutes"/>
+                            <field name="itv_early_minutes"/>
                         </group>
                         <group string="Journée">
                             <field name="has_leave"/>

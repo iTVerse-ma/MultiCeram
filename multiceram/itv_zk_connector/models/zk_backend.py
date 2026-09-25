@@ -21,13 +21,16 @@ CIRCUIT_PAUSE = timedelta(minutes=10)
 
 class ItvZkBackend(models.Model):
     _name = 'itv.zk.backend'
-    _description = "Connexion BioTime"
+    _description = "Connexion de pointage"
     _inherit = ['mail.thread']
     _order = 'name'
 
     name = fields.Char("Nom", required=True, tracking=True,
                        help="Nom libre, affiché partout où un terminal ou un pointage renvoie à ce serveur "
                             "(ex. « BioTime MultiCeram » pour le serveur de production).")
+    kind = fields.Selection(
+        [('biotime', "BioTime")], string="Type", required=True, default='biotime', tracking=True,
+        help="Logiciel interrogé par cette connexion. Ses terminaux et ses transactions portent son nom.")
     active = fields.Boolean(default=True)
     company_id = fields.Many2one('res.company', string="Société", required=True, default=lambda self: self.env.company)
     url = fields.Char(
@@ -154,7 +157,7 @@ class ItvZkBackend(models.Model):
             self.write({'status': 'ok', 'failure_count': 0, 'down_since': False, 'last_error': False})
 
     def _record_failure(self, message):
-        _logger.warning("Connexion BioTime %s : %s", self.name, message)
+        _logger.warning("Connexion %s : %s", self.name, message)
         failures = self.failure_count + 1
         vals = {'failure_count': failures, 'last_error': message, 'status': 'degraded'}
         if failures >= CIRCUIT_FAILURES:
@@ -170,7 +173,7 @@ class ItvZkBackend(models.Model):
         """Exécute le flux `key` (méthode `_sync_<key>`) et consigne le résultat dans le journal."""
         self.ensure_one()
         method = getattr(self, '_sync_%s' % key)
-        Log = self.env['itv.zk.sync.log']
+        Log = self.env['itv.zk.sync.log'].with_context(mail_create_nolog=True)
         log_vals = {'backend_id': self.id, 'key': key, 'trigger': trigger}
         # Le flux des terminaux sert de sonde : il tourne même quand le circuit est ouvert.
         if key != 'terminals' and self._is_circuit_open():
@@ -193,6 +196,7 @@ class ItvZkBackend(models.Model):
                 self._record_success()
         log = Log.create(dict(log_vals, status=status, duration=round(time.monotonic() - started, 2),
                               **stats.log_vals()))
+        log._itv_post_detail(stats)
         if stats.incomplete and self.env.context.get('cron_id'):
             # Fenêtre non terminée dans le temps imparti : le planificateur relance aussitôt.
             self.env['ir.cron']._commit_progress(remaining=1)
@@ -200,7 +204,7 @@ class ItvZkBackend(models.Model):
 
     @api.model
     def _cron_sync(self, key):
-        for backend in self.search([]):
+        for backend in self.search([('kind', '=', 'biotime')]):
             backend._run_sync(key)
 
     # -- Actions ---------------------------------------------------------------------------

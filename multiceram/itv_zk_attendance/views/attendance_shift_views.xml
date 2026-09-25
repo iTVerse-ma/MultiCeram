@@ -1,0 +1,98 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Horaire de travail : ce qu'Odoo décrit déjà, plus ce que le 3x8 exige. -->
+    <record id="resource_calendar_view_form_itv" model="ir.ui.view">
+        <field name="name">resource.calendar.form.itv</field>
+        <field name="model">resource.calendar</field>
+        <field name="inherit_id" ref="resource.resource_calendar_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//field[@name='tz']" position="after">
+                <field name="itv_is_shift"/>
+                <field name="itv_code" invisible="not itv_is_shift" placeholder="P1"/>
+                <field name="itv_overnight" invisible="not itv_is_shift"/>
+                <field name="itv_late_tolerance" invisible="not itv_is_shift"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="resource_calendar_view_list_itv" model="ir.ui.view">
+        <field name="name">resource.calendar.list.itv</field>
+        <field name="model">resource.calendar</field>
+        <field name="inherit_id" ref="resource.view_resource_calendar_tree"/>
+        <field name="arch" type="xml">
+            <xpath expr="//list" position="inside">
+                <field name="itv_code" optional="show"/>
+                <field name="itv_is_shift" optional="show"/>
+                <field name="itv_overnight" optional="show"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="itv_attendance_shift_action" model="ir.actions.act_window">
+        <field name="name">Horaires de travail</field>
+        <field name="res_model">resource.calendar</field>
+        <field name="view_mode">list,form</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Aucun horaire</p>
+            <p>Un horaire décrit les heures de chaque jour de la semaine. Cochez « Poste de travail » pour
+               qu'il serve au calcul des présences : retard, départ anticipé, heures dues.</p>
+            <p>Un poste de nuit se pose en deux morceaux (22h–24h puis 0h–6h le lendemain) avec la case
+               « Passe minuit » : les pointages d'après minuit reviennent alors à la journée où le poste commence.</p>
+        </field>
+    </record>
+
+    <record id="itv_employee_shift_view_list" model="ir.ui.view">
+        <field name="name">itv.employee.shift.list</field>
+        <field name="model">itv.employee.shift</field>
+        <field name="arch" type="xml">
+            <list string="Planning des horaires" editable="bottom">
+                <field name="employee_id" widget="many2one_avatar_employee"/>
+                <field name="calendar_id"/>
+                <field name="date_from"/>
+                <field name="date_to"/>
+                <field name="note" optional="show"/>
+                <field name="company_id" column_invisible="True"/>
+            </list>
+        </field>
+    </record>
+
+    <record id="itv_employee_shift_view_search" model="ir.ui.view">
+        <field name="name">itv.employee.shift.search</field>
+        <field name="model">itv.employee.shift</field>
+        <field name="arch" type="xml">
+            <search string="Planning des horaires">
+                <field name="employee_id"/>
+                <field name="calendar_id"/>
+                <filter string="En cours" name="current"
+                        domain="['&amp;', ('date_from', '&lt;=', context_today().strftime('%Y-%m-%d')),
+                                 '|', ('date_to', '=', False), ('date_to', '&gt;=', context_today().strftime('%Y-%m-%d'))]"/>
+                <filter string="À venir" name="future"
+                        domain="[('date_from', '&gt;', context_today().strftime('%Y-%m-%d'))]"/>
+                <group>
+                    <filter string="Horaire" name="group_calendar" context="{'group_by': 'calendar_id'}"/>
+                    <filter string="Employé" name="group_employee" context="{'group_by': 'employee_id'}"/>
+                    <filter string="Début" name="group_start" context="{'group_by': 'date_from:month'}"/>
+                </group>
+            </search>
+        </field>
+    </record>
+
+    <record id="itv_employee_shift_action" model="ir.actions.act_window">
+        <field name="name">Planning des horaires</field>
+        <field name="res_model">itv.employee.shift</field>
+        <field name="view_mode">list</field>
+        <field name="search_view_id" ref="itv_employee_shift_view_search"/>
+        <field name="context">{'search_default_current': 1, 'search_default_group_calendar': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Aucun horaire planifié</p>
+            <p>Posez l'horaire d'un employé sur une période, sans toucher à son contrat. Sans planning,
+               c'est l'horaire de sa fiche (Paie → Heures de travail) qui s'applique.</p>
+        </field>
+    </record>
+
+    <menuitem id="menu_itv_attendance_shift" name="Horaires de travail" parent="hr_attendance.menu_hr_attendance_configuration"
+              action="itv_attendance_shift_action" sequence="12"/>
+    <menuitem id="menu_itv_employee_shift" name="Planning des horaires"
+              parent="hr_attendance.menu_hr_attendance_view_attendances_management"
+              action="itv_employee_shift_action" sequence="35"/>
+</odoo>

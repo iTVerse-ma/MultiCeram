@@ -13,7 +13,7 @@ Extension de l'application Présences :
     'author': "iTVerse",
     'website': "https://itverse.ma",
     'category': 'Human Resources/Attendances',
-    'version': '19.0.2.2.1',
+    'version': '19.0.2.3.0',
     'post_init_hook': 'post_init_hook',
     'license': 'LGPL-3',
 
@@ -33,7 +33,9 @@ Extension de l'application Présences :
         'data/hr_leave_type_data.xml',
         'data/resource_calendar_data.xml',
         'data/attendance_anomaly_type_data.xml',
+        'data/attendance_shift_data.xml',
         'views/attendance_anomaly_type_views.xml',
+        'views/attendance_shift_views.xml',
         'views/attendance_period_views.xml',
         'wizard/attendance_wizard_views.xml',
         'views/hr_attendance_overtime_line_views.xml',

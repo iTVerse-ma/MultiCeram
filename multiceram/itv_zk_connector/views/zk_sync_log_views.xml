@@ -51,6 +51,7 @@
                     </group>
                     <field name="message" nolabel="1" invisible="not message"/>
                 </sheet>
+                <chatter/>
             </form>
         </field>
     </record>

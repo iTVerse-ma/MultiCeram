@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo noupdate="1">
+    <record id="ir_cron_itv_cv_sync" model="ir.cron">
+        <field name="name">CVSecurity : import des passages</field>
+        <field name="model_id" ref="itv_zk_connector.model_itv_zk_backend"/>
+        <field name="state">code</field>
+        <field name="code">model._cron_cv_sync()</field>
+        <field name="interval_number">5</field>
+        <field name="interval_type">minutes</field>
+    </record>
+</odoo>

@@ -15,7 +15,7 @@ PUNCH_SOURCES = [
 class ItvZkPunch(models.Model):
     _name = 'itv.zk.punch'
     _inherit = ['itv.audit.mixin']
-    _description = "Pointage brut BioTime"
+    _description = "Transaction BioTime"
     _order = 'punch_time desc, id desc'
     _rec_name = 'punch_local'
 

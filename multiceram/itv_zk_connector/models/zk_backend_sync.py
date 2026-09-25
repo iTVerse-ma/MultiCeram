@@ -74,6 +74,11 @@ class ItvZkBackend(models.Model):
                     created = Punch._import_biotime_transactions(self, records)
                 stats.fetched += len(records)
                 stats.created += len(created)
+                for punch in created:
+                    stats.note(_("%(time)s — %(employee)s (%(code)s) sur %(terminal)s",
+                                 time=punch.punch_local or '', code=punch.emp_code or '?',
+                                 employee=punch.employee_id.display_name or _("employé inconnu"),
+                                 terminal=punch.terminal_id.display_name or punch.terminal_sn or '?'))
                 stats.unchanged += len(records) - len(created)
                 self._checkpoint(len(records))
                 if time.monotonic() > deadline:
@@ -155,12 +160,19 @@ class ItvZkBackend(models.Model):
                         back_online |= terminal
                     elif not online and not terminal.offline_since:
                         vals['offline_since'] = last_activity or now
+                    was_offline = bool(terminal.offline_since)
                     terminal.write(vals)
                     stats.updated += 1
+                    if was_offline and online:
+                        stats.note(_("Terminal revenu en ligne : %s", terminal.display_name))
+                    elif vals.get('offline_since'):
+                        stats.note(_("Terminal hors ligne : %s", terminal.display_name))
                 else:
                     vals.update(backend_id=self.id, sn=serial, offline_since=False if online else (last_activity or now))
                     terminals[serial] = Terminal.create(vals)
                     stats.created += 1
+                    stats.note(_("Terminal découvert : %(name)s (%(serial)s)",
+                                 name=terminals[serial].display_name, serial=serial))
         finally:
             stats.api_calls += client.calls
         for terminal in back_online:
@@ -200,13 +212,25 @@ class ItvZkBackend(models.Model):
                 try:
                     with self.env.cr.savepoint():
                         if employee:
+                            before = employee.name
+                            changes = employee._itv_biotime_changes(vals)
                             employee.write(vals)
                             stats.updated += 1
+                            if changes:
+                                employee._itv_audit(_("Mis à jour depuis BioTime"), ", ".join(changes))
+                            stats.note(_("Employé mis à jour : %(name)s (%(code)s)%(renamed)s",
+                                         name=employee.name, code=code,
+                                         renamed=_(", renommé depuis « %s »", before) if before != employee.name else ''))
                         else:
                             # Les accès portail sont créés par itv_hr_portal, jamais ici.
                             employees[code] = Employee.create(dict(
                                 vals, barcode=code, company_id=self.company_id.id, itv_to_complete=True))
                             stats.created += 1
+                            employees[code]._itv_audit(
+                                _("Créé depuis BioTime"),
+                                _("Matricule %(code)s, connexion %(backend)s", code=code, backend=self.display_name))
+                            stats.note(_("Employé créé depuis BioTime : %(name)s (%(code)s)",
+                                         name=employees[code].name, code=code))
                 except (ValidationError, UserError) as exc:
                     stats.errors += 1
                     stats.messages.append(_("Employé %(code)s ignoré : %(error)s", code=code, error=exc))

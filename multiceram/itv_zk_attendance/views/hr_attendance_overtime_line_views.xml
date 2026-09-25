@@ -5,24 +5,28 @@
         <field name="model">hr.attendance.overtime.line</field>
         <field name="arch" type="xml">
             <list string="Heures supplémentaires" default_order="date desc, employee_id">
+                <!-- L'entête agit sur une sélection : Odoo n'y masque rien ligne par ligne, et un libellé
+                     ne peut pas suivre un statut. Un seul bouton, qui fait avancer chaque ligne d'une étape. -->
                 <header>
-                    <button name="action_itv_validate_1" type="object" string="Valider N1" class="btn-primary"/>
-                    <button name="action_itv_validate_2" type="object" string="Valider N2"/>
+                    <button name="action_approve" type="object" string="Valider" class="btn-primary"/>
                     <button name="action_itv_refuse" type="object" string="Refuser"/>
                     <button name="action_itv_reset" type="object" string="Remettre en validation"/>
                 </header>
                 <field name="date" readonly="itv_state != 'submitted'"/>
                 <field name="employee_id" widget="many2one_avatar_employee" readonly="itv_state != 'submitted'"/>
-                <field name="duration" widget="float_time" sum="Total" readonly="itv_state != 'submitted'"/>
+                <field name="duration" string="HS corrigés" widget="float_time" sum="Total"
+                       readonly="itv_state != 'submitted'"
+                       decoration-danger="duration == 0" decoration-bf="duration == 0"/>
                 <field name="itv_rate" required="1" readonly="itv_state != 'submitted'"/>
-                <field name="itv_state" widget="badge" readonly="1"
+                <!-- La liste est groupée par statut : la colonne ferait doublon, elle reste décochée. -->
+                <field name="itv_state" widget="badge" readonly="1" optional="hide"
                        decoration-warning="itv_state in ('submitted', 'validated_1')"
                        decoration-success="itv_state == 'validated_2'" decoration-danger="itv_state == 'refused'"/>
                 <field name="itv_submitted_uid" widget="many2one_avatar_user" optional="hide"/>
-                <field name="itv_validated_1_uid" widget="many2one_avatar_user" optional="show"/>
-                <field name="itv_validated_1_date" optional="hide"/>
-                <field name="itv_validated_2_uid" widget="many2one_avatar_user" optional="show"/>
-                <field name="itv_validated_2_date" optional="hide"/>
+                <field name="itv_validated_1_uid" string="N1 par" widget="many2one_avatar_user" optional="show"/>
+                <field name="itv_validated_1_date" string="N1 le" optional="hide"/>
+                <field name="itv_validated_2_uid" string="N2 par" widget="many2one_avatar_user" optional="show"/>
+                <field name="itv_validated_2_date" string="N2 le" optional="hide"/>
                 <field name="itv_refused_uid" widget="many2one_avatar_user" optional="hide"/>
                 <field name="itv_validator_1_id" widget="many2one_avatar_user" optional="hide"/>
                 <field name="itv_validator_2_id" widget="many2one_avatar_user" optional="hide"/>
@@ -131,6 +135,14 @@
                 <filter string="Validées" name="validated_2" domain="[('itv_state', '=', 'validated_2')]"/>
                 <filter string="Refusées" name="refused" domain="[('itv_state', '=', 'refused')]"/>
                 <separator/>
+                <!-- Traitement du jour : toutes les étapes du circuit, sur la journée de la veille. -->
+                <filter string="Hier" name="yesterday"
+                        domain="[('date', '=', (context_today() - relativedelta(days=1)).strftime('%Y-%m-%d'))]"/>
+                <filter string="Aujourd'hui" name="today"
+                        domain="[('date', '=', context_today().strftime('%Y-%m-%d'))]"/>
+                <filter string="Ce mois" name="this_month"
+                        domain="[('date', '&gt;=', context_today().strftime('%Y-%m-01'))]"/>
+                <separator/>
                 <filter string="À valider par moi (N1)" name="my_n1"
                         domain="[('itv_state', '=', 'submitted'), ('itv_validator_1_id', '=', uid)]"/>
                 <filter string="À valider par moi (N2)" name="my_n2"
@@ -160,10 +172,13 @@
             (0, 0, {'view_mode': 'pivot', 'view_id': ref('itv_overtime_line_view_pivot')})]"/>
         <field name="search_view_id" ref="itv_overtime_line_view_search"/>
         <field name="domain">[('itv_state', '!=', False)]</field>
-        <field name="context">{'default_itv_state': 'submitted', 'default_itv_rate': '25', 'search_default_group_state': 1}</field>
+        <!-- read_group_expand : les étapes vides restent affichées (group_expand du champ statut). -->
+        <field name="context">{'default_itv_state': 'submitted', 'default_itv_rate': '25', 'search_default_group_state': 1, 'search_default_yesterday': 1, 'read_group_expand': True}</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">Aucune heure supplémentaire en circuit</p>
-            <p>Proposez les heures supplémentaires depuis Présences : elles arrivent ici en attente de validation N1, puis N2.</p>
+            <p>Proposez les heures supplémentaires depuis Présences : elles arrivent ici en attente de validation N1, puis N2.
+               Tout se traite ici : demande de déclaration, validation N1 puis N2, refus et corrections.
+               Les lignes allées au bout du circuit se consultent dans « Heures supplémentaires traitées ».</p>
         </field>
     </record>
 
@@ -181,6 +196,89 @@
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">Aucune heure supplémentaire validée</p>
             <p>Heures validées au niveau 2, par employé, mois et taux : téléchargez le tableau croisé pour la paie.</p>
+        </field>
+    </record>
+
+    <!-- Écran des heures traitées : mêmes filtres, plus les périodes (consultation par mois de paie). -->
+    <record id="itv_overtime_line_view_search_processed" model="ir.ui.view">
+        <field name="name">hr.attendance.overtime.line.search.itv.processed</field>
+        <field name="model">hr.attendance.overtime.line</field>
+        <field name="inherit_id" ref="itv_overtime_line_view_search"/>
+        <field name="mode">primary</field>
+        <field name="priority">20</field>
+        <field name="arch" type="xml">
+            <!-- L'écran liste ce qui a été traité : les périodes portent sur la date de validation N2,
+                 pas sur le jour travaillé. Séparateur final : le sélecteur « Date » reste un filtre à part. -->
+            <filter name="date" position="before">
+                <filter string="Validées aujourd'hui" name="validated_today"
+                        domain="[('itv_validated_2_date', '&gt;=', context_today().strftime('%Y-%m-%d'))]"/>
+                <filter string="Validées hier" name="validated_yesterday"
+                        domain="[('itv_validated_2_date', '&gt;=', (context_today() - relativedelta(days=1)).strftime('%Y-%m-%d')),
+                                 ('itv_validated_2_date', '&lt;', context_today().strftime('%Y-%m-%d'))]"/>
+                <filter string="Validées ce mois" name="validated_this_month"
+                        domain="[('itv_validated_2_date', '&gt;=', context_today().strftime('%Y-%m-01'))]"/>
+                <filter string="Validées le mois dernier" name="validated_last_month"
+                        domain="[('itv_validated_2_date', '&gt;=', (context_today() - relativedelta(months=1)).strftime('%Y-%m-01')),
+                                 ('itv_validated_2_date', '&lt;', context_today().strftime('%Y-%m-01'))]"/>
+                <separator/>
+            </filter>
+        </field>
+    </record>
+
+    <!-- Écran des heures traitées : consultation seule, aucune action. Tout le circuit,
+         refus et corrections compris, se déroule dans « Heures supplémentaires ». -->
+    <record id="itv_overtime_line_view_list_processed" model="ir.ui.view">
+        <field name="name">hr.attendance.overtime.line.list.itv.processed</field>
+        <field name="model">hr.attendance.overtime.line</field>
+        <field name="inherit_id" ref="itv_overtime_line_view_list"/>
+        <field name="mode">primary</field>
+        <field name="priority">20</field>
+        <field name="arch" type="xml">
+            <list position="attributes">
+                <attribute name="create">0</attribute>
+                <attribute name="edit">0</attribute>
+                <attribute name="delete">0</attribute>
+            </list>
+            <xpath expr="//header" position="replace"/>
+            <xpath expr="//list/button[@name='action_itv_validate_1']" position="replace"/>
+            <xpath expr="//list/button[@name='action_itv_validate_2']" position="replace"/>
+            <xpath expr="//list/button[@name='action_itv_refuse']" position="replace"/>
+            <xpath expr="//list/button[@name='action_itv_reset']" position="replace"/>
+            <!-- Traçabilité : qui a validé, à quel niveau, et quand. -->
+            <field name="itv_validated_1_uid" position="attributes">
+                <attribute name="optional">show</attribute>
+                <attribute name="string">N1 par</attribute>
+            </field>
+            <field name="itv_validated_1_date" position="attributes">
+                <attribute name="optional">show</attribute>
+                <attribute name="string">N1 le</attribute>
+            </field>
+            <field name="itv_validated_2_uid" position="attributes">
+                <attribute name="optional">show</attribute>
+                <attribute name="string">N2 par</attribute>
+            </field>
+            <field name="itv_validated_2_date" position="attributes">
+                <attribute name="optional">show</attribute>
+                <attribute name="string">N2 le</attribute>
+            </field>
+        </field>
+    </record>
+
+    <record id="itv_overtime_line_action_processed" model="ir.actions.act_window">
+        <field name="name">Heures supplémentaires traitées</field>
+        <field name="res_model">hr.attendance.overtime.line</field>
+        <field name="view_mode">list,form,pivot</field>
+        <field name="view_ids" eval="[(5, 0, 0),
+            (0, 0, {'view_mode': 'list', 'view_id': ref('itv_overtime_line_view_list_processed')}),
+            (0, 0, {'view_mode': 'form', 'view_id': ref('itv_overtime_line_view_form')}),
+            (0, 0, {'view_mode': 'pivot', 'view_id': ref('itv_overtime_line_view_pivot')})]"/>
+        <field name="search_view_id" ref="itv_overtime_line_view_search_processed"/>
+        <field name="domain">[('itv_state', '=', 'validated_2')]</field>
+        <field name="context">{'search_default_validated_yesterday': 1}</field>
+        <field name="help" type="html">
+            <p class="o_view_nocontent_smiling_face">Aucune heure supplémentaire traitée</p>
+            <p>Heures allées au bout du circuit : validées au niveau 1 puis au niveau 2. Consultation seule,
+               avec qui a validé et quand. Le circuit lui-même se déroule dans « Heures supplémentaires ».</p>
         </field>
     </record>
 </odoo>

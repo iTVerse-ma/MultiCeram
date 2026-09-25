@@ -4,8 +4,7 @@ from odoo.exceptions import UserError
 
 
 class HrEmployee(models.Model):
-    _inherit = ['hr.employee', 'itv.audit.mixin']
-    _name = 'hr.employee'
+    _inherit = 'hr.employee'
 
     # Ce qui part vers la pointeuse est suivi dans la discussion de la fiche.
     barcode = fields.Char(tracking=True)
@@ -21,7 +20,7 @@ class HrEmployee(models.Model):
     itv_terminal_ids = fields.Many2many(
         'itv.zk.terminal', 'itv_employee_terminal_rel', 'employee_id', 'terminal_id',
         string="Pointeuses", groups='hr.group_hr_user', copy=False,
-        domain="[('biotime_area_id', '!=', 0), ('backend_id.read_only', '=', False)]",
+        domain="[('biotime_area_id', '!=', 0), ('backend_kind', '=', 'biotime'), ('backend_id.read_only', '=', False)]",
         help="Pointeuses sur lesquelles l'employé peut pointer. BioTime affecte les employés par zone : "
              "choisir une pointeuse l'envoie à toutes les pointeuses de la même zone.\n"
              "Vide : zone par défaut de la connexion BioTime.")
@@ -41,12 +40,6 @@ class HrEmployee(models.Model):
     # Champs qui, modifiés, doivent repartir vers BioTime.
     ITV_PUSH_FIELDS = ('name', 'barcode', 'pin', 'itv_card_no', 'department_id', 'active', 'itv_terminal_ids')
 
-    @api.model_create_multi
-    def create(self, vals_list):
-        employees = super().create(vals_list)
-        employees._itv_auto_push()
-        return employees
-
     def write(self, vals):
         result = super().write(vals)
         if any(name in vals for name in self.ITV_PUSH_FIELDS) and not self.env.context.get('itv_skip_push'):
@@ -56,15 +49,22 @@ class HrEmployee(models.Model):
         return result
 
     def _itv_auto_push(self):
-        """Envoi automatique vers BioTime, silencieux : un échec laisse la demande dans la file."""
+        """Tient à jour dans BioTime les employés qui y sont déjà.
+
+        Créer un employé dans Odoo ne le crée pas sur la pointeuse : tout le monde n'a pas à y
+        pointer, et une fiche se remplit souvent en plusieurs fois. L'envoi initial se fait avec
+        le bouton « Envoyer vers BioTime » ; ensuite, ses modifications suivent toutes seules.
+        """
         if self.env.context.get('itv_skip_push') or self.env.context.get('install_mode'):
             return
-        backend = self.env['itv.zk.backend'].search([('active', '=', True), ('read_only', '=', False)])
+        backend = self.env['itv.zk.backend'].search(
+            [('kind', '=', 'biotime'), ('active', '=', True), ('read_only', '=', False)])
         if len(backend) != 1:
             return          # aucune connexion ouverte en écriture, ou plusieurs : on ne devine pas
         Outbox = self.env['itv.zk.outbox']
         entries = Outbox.browse()
-        for employee in self.filtered('barcode'):
+        known = self.filtered(lambda employee: employee.barcode and employee.sudo().itv_biotime_code)
+        for employee in known:
             entries |= Outbox._enqueue_employee(employee, backend)
         if entries:
             entries.with_context(itv_skip_push=True)._process_employee()
@@ -76,9 +76,9 @@ class HrEmployee(models.Model):
         dans celles laissées en lecture seule, et on refuse de choisir s'il y en a plusieurs ouvertes.
         """
         Backend = self.env['itv.zk.backend']
-        if not Backend.search_count([('active', '=', True)]):
+        if not Backend.search_count([('kind', '=', 'biotime'), ('active', '=', True)]):
             raise UserError(_("Aucune connexion BioTime n'est configurée."))
-        writable = Backend.search([('active', '=', True), ('read_only', '=', False)])
+        writable = Backend.search([('kind', '=', 'biotime'), ('active', '=', True), ('read_only', '=', False)])
         if not writable:
             raise UserError(_("Toutes les connexions BioTime sont en lecture seule : "
                               "décochez l'option sur celle qui doit recevoir les employés."))

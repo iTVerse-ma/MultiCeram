@@ -3,7 +3,7 @@ from odoo import SUPERUSER_ID, _, api, fields, models
 from odoo.exceptions import AccessError, UserError, ValidationError
 
 ITV_STATES = [
-    ('submitted', "En cours de validation"),
+    ('submitted', "Détectées par le système"),
     ('validated_1', "Validée N1"),
     ('validated_2', "Validée N2"),
     ('refused', "Refusée"),
@@ -25,12 +25,15 @@ STEPS = ('itv_validated_1', 'itv_validated_2', 'itv_refused')
 
 
 class HrAttendanceOvertimeLine(models.Model):
-    _inherit = ['hr.attendance.overtime.line', 'itv.audit.mixin']
+    # itv.audit.mixin apporte la discussion : sans elle, `tracking=True` et `_itv_audit` n'ont pas de support.
     _name = 'hr.attendance.overtime.line'
+    _inherit = ['hr.attendance.overtime.line', 'itv.audit.mixin']
 
     itv_day_id = fields.Many2one('itv.attendance.day', string="Journée de pointage", readonly=True, copy=False,
                                  index='btree_not_null', ondelete='set null')
+    # group_expand : les quatre étapes restent affichées même vides, pour voir d'un coup ce qui manque.
     itv_state = fields.Selection(ITV_STATES, string="Statut", copy=False, index='btree_not_null', tracking=True,
+                                 group_expand=True,
                                  help="Étape de validation MultiCeram ; vide pour les heures supplémentaires natives.")
     itv_rate = fields.Selection(ITV_RATES, string="Taux")
     itv_submitted_uid = fields.Many2one('res.users', string="Demandée par", readonly=True, copy=False)
@@ -105,7 +108,9 @@ class HrAttendanceOvertimeLine(models.Model):
             is_2 = exempt or line.itv_validator_2_id == user
             line.itv_can_validate_1 = line.itv_state == 'submitted' and is_1
             line.itv_can_validate_2 = line.itv_state == 'validated_1' and is_2
-            line.itv_can_refuse = line.itv_state in ('submitted', 'validated_1') and (is_1 or is_2)
+            # Le N2 peut refuser ce qu'il a lui-même accepté : sa décision reste la sienne.
+            line.itv_can_refuse = ((line.itv_state in ('submitted', 'validated_1') and (is_1 or is_2))
+                                   or (line.itv_state == 'validated_2' and is_2))
             line.itv_can_reset = line.itv_state in ('validated_1', 'refused') and (is_1 or is_2)
 
     _itv_rate_uniq = models.UniqueIndex("(employee_id, date, itv_rate) WHERE itv_state IS NOT NULL",
@@ -173,14 +178,22 @@ class HrAttendanceOvertimeLine(models.Model):
     # -- Boutons natifs de Présences : ils suivent le circuit ---------------------------------------
 
     def action_approve(self):
+        """Bouton « Valider » de l'entête : chaque journée avance d'une étape, N1 puis N2.
+
+        Les lignes déjà traitées (validées N2, refusées) sont ignorées : une sélection peut en
+        contenir, en particulier depuis l'écran des heures supplémentaires traitées. On ne
+        prévient que si rien du tout n'était à valider.
+        """
         nabi = self.filtered('itv_state')
-        for lines in nabi._itv_day_lines().grouped(lambda line: (line.employee_id, line.date)).values():
+        groups = nabi._itv_day_lines().grouped(lambda line: (line.employee_id, line.date))
+        pending = [lines for lines in groups.values() if lines[0].itv_state in ('submitted', 'validated_1')]
+        if nabi and not pending:
+            raise UserError(_("Aucune des heures supplémentaires sélectionnées n'est en attente de validation."))
+        for lines in pending:
             if lines[0].itv_state == 'submitted':
                 lines.action_itv_validate_1()
-            elif lines[0].itv_state == 'validated_1':
-                lines.action_itv_validate_2()
             else:
-                raise UserError(_("Ces heures supplémentaires ne sont pas en attente de validation."))
+                lines.action_itv_validate_2()
         return super(HrAttendanceOvertimeLine, self - nabi).action_approve()
 
     def action_refuse(self):
@@ -215,22 +228,55 @@ class HrAttendanceOvertimeLine(models.Model):
         return self.env.user.id == SUPERUSER_ID or (admin and self.env.user == admin)
 
     def action_itv_refuse(self):
-        lines = self._itv_day_lines()
-        lines._itv_check_validator(1 if lines[:1].itv_state == 'submitted' else 2)
-        lines._itv_check_states(('submitted', 'validated_1'), _("Seules les heures supplémentaires en cours de validation peuvent être refusées."))
-        lines._itv_step('refused', 'itv_refused')
+        """Refuse les journées : avant la décision du N2, ou après, s'il revient dessus.
+
+        Le N1 refuse ce qui est encore détecté ; le N2 refuse ce que le N1 a validé, et peut aussi
+        revenir sur son propre accord — la ligne quitte alors les heures traitées.
+        """
+        eligible = self.browse()
+        for lines in self._itv_day_lines().grouped(lambda line: (line.employee_id, line.date)).values():
+            if all(line.itv_state in ('submitted', 'validated_1', 'validated_2') for line in lines):
+                eligible |= lines
+        if not eligible:
+            raise UserError(_("Aucune des heures supplémentaires sélectionnées ne peut être refusée : "
+                              "elles sont déjà refusées."))
+        for lines in eligible.grouped(lambda line: (line.employee_id, line.date)).values():
+            lines._itv_check_validator(1 if lines[:1].itv_state == 'submitted' else 2)
+        eligible._itv_step('refused', 'itv_refused')
 
     def action_itv_reset(self):
-        """Remet la journée en cours de validation : correction d'un refus ou d'une validation à revoir."""
-        lines = self._itv_day_lines()
-        if not lines.filtered('itv_can_reset') and not self._itv_separation_exempt():
+        """Renvoie la journée en validation : correction d'un refus ou d'une validation à revoir.
+
+        Les journées déjà closes (validées N2) présentes dans la sélection sont ignorées : l'écran
+        des heures traitées les affiche à côté des refusées, et l'entête agit sur toute la sélection.
+        """
+        eligible = self.browse()
+        for lines in self._itv_day_lines().grouped(lambda line: (line.employee_id, line.date)).values():
+            if all(line.itv_state in ('validated_1', 'refused') for line in lines):
+                eligible |= lines
+        if not eligible:
+            raise UserError(_("Aucune des heures supplémentaires sélectionnées ne peut être remise en validation : "
+                              "seules celles validées au niveau 1, ou refusées, le peuvent."))
+        if not eligible.filtered('itv_can_reset') and not self._itv_separation_exempt():
             raise AccessError(_("Seuls les responsables N1 et N2 de l'employé peuvent remettre ces heures en validation."))
-        lines._itv_check_states(('validated_1', 'refused'), _("Seules les heures supplémentaires validées au niveau 1, ou refusées, peuvent être remises en validation."))
         vals = {'itv_state': 'submitted'}
         for step in STEPS:
             vals.update({step + '_uid': False, step + '_date': False})
-        lines.sudo().with_context(itv_overtime_sync=True).write(vals)
-        lines._itv_audit(_("Remises en validation"))
+        eligible.sudo().with_context(itv_overtime_sync=True).write(vals)
+        for line in eligible:
+            line._itv_audit(_("Remise en validation"), line._itv_audit_lines())
+
+    def _itv_audit_lines(self):
+        """Ce qu'il faut relire des mois plus tard pour comprendre une décision."""
+        self.ensure_one()
+        return [
+            _("Employé : %s", self.employee_id.display_name),
+            _("Journée : %s", self.date),
+            _("Heures retenues : %(hours)s au taux %(rate)s %%",
+              hours=self._itv_hours(self.duration), rate=self.itv_rate or ''),
+            _("Heures détectées par les pointages : %s", self._itv_hours(self.itv_system_hours))
+            if self.itv_system_hours else _("Aucune heure détectée par les pointages"),
+        ]
 
     def _itv_day_lines(self):
         """Le circuit porte sur la journée : toutes les lignes (tous taux) du même employé et du même jour."""
@@ -277,10 +323,7 @@ class HrAttendanceOvertimeLine(models.Model):
         })
         label = dict(ITV_STATES)[state]
         for line in self:
-            line._itv_audit(label, _("%(hours)s h au taux %(rate)s %%, sur %(detected)s h détectées",
-                                     hours=("%.2f" % line.duration).replace('.', ','),
-                                     rate=line.itv_rate or '',
-                                     detected=("%.2f" % line.itv_system_hours).replace('.', ',')))
+            line._itv_audit(label, line._itv_audit_lines())
 
     def _itv_employee_dates(self):
         return [(line.employee_id.id, line.date) for line in self]

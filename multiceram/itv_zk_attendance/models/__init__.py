@@ -1,5 +1,7 @@
 # -*- coding: utf-8 -*-
 from . import attendance_anomaly_type
+from . import resource_calendar
+from . import attendance_shift
 from . import attendance_dirty
 from . import attendance_period
 from . import attendance_day

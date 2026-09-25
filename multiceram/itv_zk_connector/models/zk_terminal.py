@@ -23,11 +23,12 @@ TERMINAL_USAGES = [
 class ItvZkTerminal(models.Model):
     _name = 'itv.zk.terminal'
     _inherit = ['itv.audit.mixin']
-    _description = "Terminal BioTime"
+    _description = "Terminal"
     _order = 'backend_id, alias, sn'
     _rec_name = 'alias'
 
     backend_id = fields.Many2one('itv.zk.backend', string="Connexion", required=True, ondelete='cascade', index=True)
+    backend_kind = fields.Selection(related='backend_id.kind', store=True, string="Type")
     company_id = fields.Many2one(related='backend_id.company_id', store=True, index=True)
     active = fields.Boolean(default=True)
     biotime_id = fields.Integer("ID BioTime", index=True, copy=False)
@@ -85,7 +86,7 @@ class ItvZkTerminal(models.Model):
         minutes = abs(minutes)
         return "UTC%s%02d:%02d" % (sign, minutes // 60, minutes % 60)
 
-    _backend_sn_uniq = models.UniqueIndex('(backend_id, sn)', "Ce numéro de série existe déjà pour cette connexion BioTime.")
+    _backend_sn_uniq = models.UniqueIndex('(backend_id, sn)', "Ce numéro de série existe déjà pour cette connexion.")
 
     @api.constrains('timezone_override')
     def _check_timezone_override(self):

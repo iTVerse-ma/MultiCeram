@@ -52,16 +52,24 @@ class ZkOutbox(models.Model):
                         'state': 'confirmed', 'biotime_ref': str(biotime_id),
                         'sent_at': fields.Datetime.now(), 'attempts': entry.attempts + 1, 'last_error': False,
                     })
-                    employee._itv_audit(
-                        _("Envoyé vers BioTime"),
-                        _("Connexion %(backend)s, identifiant BioTime %(ref)s",
-                          backend=entry.backend_id.display_name, ref=biotime_id))
+                    employee._itv_audit(_("Envoyé vers BioTime"), [
+                        _("Connexion : %s", entry.backend_id.display_name),
+                        _("Identifiant BioTime : %s", biotime_id),
+                        _("Matricule envoyé : %s", employee.barcode or ''),
+                        _("Code PIN envoyé : %s", _("oui") if employee.sudo().pin else _("aucun")),
+                        _("Pointeuses : %s", ", ".join(employee.sudo().itv_terminal_ids.mapped('alias'))
+                          or _("zone par défaut de la connexion")),
+                    ])
             except Exception as error:
                 message = str(error)[:500]
                 logger.warning("Envoi BioTime de l'employé %s : %s", employee.display_name, message)
                 entry.write({'state': 'error', 'attempts': entry.attempts + 1, 'last_error': message})
                 employee.write({'itv_push_state': 'error', 'itv_push_error': message})
-                employee._itv_audit(_("Envoi vers BioTime refusé"), message)
+                employee._itv_audit(_("Envoi vers BioTime refusé"), [
+                    _("Connexion : %s", entry.backend_id.display_name),
+                    _("Matricule : %s", employee.barcode or ''),
+                    _("Erreur : %s", message),
+                ])
 
     @api.model
     def _cron_process_employees(self, limit=50):

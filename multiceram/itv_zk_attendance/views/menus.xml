@@ -4,6 +4,8 @@
               action="itv_attendance_action_anomalies" sequence="25"/>
     <menuitem id="menu_itv_overtime_lines" name="Heures supplémentaires" parent="hr_attendance.menu_hr_attendance_view_attendances_management"
               action="itv_overtime_line_action" sequence="30"/>
+    <menuitem id="menu_itv_overtime_processed" name="Heures supplémentaires traitées" parent="hr_attendance.menu_hr_attendance_view_attendances_management"
+              action="itv_overtime_line_action_processed" sequence="31"/>
     <menuitem id="menu_itv_attendance_legacy" name="Calcul historique" parent="hr_attendance.menu_hr_attendance_reporting"
               action="itv_attendance_day_action_legacy" sequence="30"/>
     <menuitem id="menu_itv_overtime_validated" name="Heures supplémentaires validées" parent="hr_attendance.menu_hr_attendance_reporting"

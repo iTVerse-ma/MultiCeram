@@ -57,6 +57,14 @@ class LegacyEmployeeSettings:
     week_hours: int | None = None        # 44 ou 48
     auto_pause: bool = False
     ignore_uhf: bool = False
+    # Norme propre à certaines journées : un poste peut changer d'un jour à l'autre.
+    day_hours_by_date: tuple = ()
+
+    def hours_for(self, day):
+        for when, hours in self.day_hours_by_date:
+            if when == day:
+                return hours
+        return self.day_hours
 
 
 @dataclass(frozen=True)
@@ -156,7 +164,7 @@ def _order(punch):
     return punch.local_time, punch.id
 
 
-def compute_legacy_page(start, end, punches, settings, holidays=(), leaves=(), overtime_rows=None):
+def compute_legacy_page(start, end, punches, settings, holidays=(), leaves=(), overtime_rows=None, rest_days=()):
     """Page « Pointages / employé » pour un employé sur [start, end] (dates locales incluses).
 
     `punches` : pointages de l'employé, doublons et écartés compris (ils sont filtrés ici).
@@ -182,12 +190,12 @@ def compute_legacy_page(start, end, punches, settings, holidays=(), leaves=(), o
     if flagged:
         # 1er affichage, doublons encore présents : s'il plantait, la transaction était annulée avec
         # le marquage des doublons, et chaque rechargement plantait de la même façon.
-        _render_page(start, end, sorted(selected, key=_order), settings, holidays, leaves, overtime_rows)
+        _render_page(start, end, sorted(selected, key=_order), settings, holidays, leaves, overtime_rows, rest_days)
     visible = sorted((punch for punch in selected if punch.id not in flagged), key=_order)
-    return _render_page(start, end, visible, settings, holidays, leaves, overtime_rows)
+    return _render_page(start, end, visible, settings, holidays, leaves, overtime_rows, rest_days)
 
 
-def _render_page(start, end, visible, settings, holidays, leaves, overtime_rows):
+def _render_page(start, end, visible, settings, holidays, leaves, overtime_rows, rest_days=()):
     """Un affichage de la page d'origine, sur les pointages donnés."""
     days = [start + timedelta(days=offset) for offset in range((end - start).days + 1)]
     by_day = {day: [] for day in days}
@@ -250,7 +258,7 @@ def _render_page(start, end, visible, settings, holidays, leaves, overtime_rows)
         if detected_present:
             anomalies.append('p')
 
-        norm = timedelta(hours=settings.day_hours or 8)
+        norm = timedelta(hours=settings.hours_for(day) or settings.day_hours or 8)
         pause = ZERO
         if not presence_anomaly and presence:
             if settings.auto_pause or doors:
@@ -292,7 +300,11 @@ def _render_page(start, end, visible, settings, holidays, leaves, overtime_rows)
         threshold = norm + pause
         hs = heures - threshold if heures > threshold else ZERO
         hs25_raw = heures25 - threshold if heures > threshold else ZERO
-        abs25 = norm - heures25 if norm > heures25 else ZERO
+        # Journée non due : congé, jour férié ou jour de repos ne comptent pas d'absence.
+        on_holiday = any(h.date_from.date() <= day <= h.date_to.date() for h in holidays)
+        on_leave = any(leave.date_from <= day <= leave.date_to for leave in leaves)
+        day_off = on_holiday or on_leave or day in rest_days
+        abs25 = ZERO if day_off else (norm - heures25 if norm > heures25 else ZERO)
 
         rows = overtime_rows.get(day) or ()
         if len(rows) > 1:

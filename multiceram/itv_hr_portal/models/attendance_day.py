@@ -72,7 +72,13 @@ class ItvAttendanceDay(models.Model):
             'itv_portal_message': message or False,
             'itv_portal_sent_date': fields.Datetime.now(),
         })
-        days._itv_audit(_("Anomalie envoyée à l'employé"), message)
+        for day in days:
+            day._itv_audit(_("Anomalie envoyée à l'employé"), [
+                _("Employé : %s", day.employee_id.display_name),
+                _("Journée : %s", day.date),
+                _("Anomalie : %s", day.anomaly_label or ''),
+                _("Message : %s", message) if message else _("Envoyée sans message."),
+            ])
         return result
 
     def action_itv_portal_send(self):
@@ -108,7 +114,12 @@ class ItvAttendanceDay(models.Model):
                 'anomaly_resolution': 'justified',
                 'anomaly_note': day.anomaly_note or _("Explication de l'employé acceptée"),
             })
-            day._itv_audit(_("Explication acceptée"), day.itv_portal_reason)
+            day._itv_audit(_("Explication acceptée"), [
+                _("Employé : %s", day.employee_id.display_name),
+                _("Journée : %s", day.date),
+                _("Explication de l'employé : %s", day.itv_portal_reason or ''),
+                _("L'anomalie est justifiée."),
+            ])
         return True
 
     def action_itv_portal_refuse_back(self):
@@ -125,7 +136,12 @@ class ItvAttendanceDay(models.Model):
                 'anomaly_resolution': 'ignored',
                 'anomaly_note': day.anomaly_note or _("Explication refusée"),
             })
-            day._itv_audit(_("Explication refusée, dossier clos"), day.itv_portal_reason)
+            day._itv_audit(_("Explication refusée, dossier clos"), [
+                _("Employé : %s", day.employee_id.display_name),
+                _("Journée : %s", day.date),
+                _("Explication de l'employé : %s", day.itv_portal_reason or ''),
+                _("L'anomalie est ignorée."),
+            ])
         return True
 
     def _itv_refer_overtime(self, hours, rate, note=False):
@@ -154,15 +170,26 @@ class ItvAttendanceDay(models.Model):
             'anomaly_resolution': 'justified',
             'anomaly_note': note or _("Requalifiée en heures supplémentaires"),
         })
-        days._itv_audit(_("Anomalie requalifiée en heures supplémentaires"),
-                        _("%(hours)s h au taux %(rate)s %%", hours=("%.2f" % hours).replace('.', ','), rate=rate))
+        for day in days:
+            day._itv_audit(_("Anomalie requalifiée en heures supplémentaires"), [
+                _("Employé : %s", day.employee_id.display_name),
+                _("Journée : %s", day.date),
+                _("Heures mises en circuit : %(hours)s au taux %(rate)s %%",
+                  hours=day._itv_hours(hours), rate=rate),
+                _("Motif : %s", note) if note else None,
+            ])
         return True
 
     # -- Côté portail -----------------------------------------------------------------------------
 
     def _itv_portal_submit(self, reason):
         """Dépôt depuis le portail : appelé en sudo après contrôle d'appartenance."""
-        self._itv_audit(_("Explication déposée par l'employé"), reason)
+        for day in self:
+            day._itv_audit(_("Explication déposée par l'employé"), [
+                _("Journée : %s", day.date),
+                _("Demande des RH : %s", day.itv_portal_message or ''),
+                _("Explication : %s", reason),
+            ])
         return self.write({
             'itv_portal_reason': reason,
             'itv_portal_state': 'submitted',

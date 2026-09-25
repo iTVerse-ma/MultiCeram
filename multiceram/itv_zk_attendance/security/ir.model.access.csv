@@ -8,3 +8,5 @@ access_itv_attendance_anomaly_wizard_officer,itv.attendance.anomaly.wizard.offic
 access_itv_attendance_punch_wizard_officer,itv.attendance.punch.wizard.officer,model_itv_attendance_punch_wizard,hr_attendance.group_hr_attendance_officer,1,1,1,1
 access_itv_attendance_period_officer,itv.attendance.period.officer,model_itv_attendance_period,hr_attendance.group_hr_attendance_officer,1,0,0,0
 access_itv_attendance_period_manager,itv.attendance.period.manager,model_itv_attendance_period,hr_attendance.group_hr_attendance_manager,1,1,1,1
+access_itv_employee_shift_officer,itv.employee.shift.officer,model_itv_employee_shift,hr_attendance.group_hr_attendance_officer,1,1,1,1
+access_itv_employee_shift_manager,itv.employee.shift.manager,model_itv_employee_shift,hr_attendance.group_hr_attendance_manager,1,1,1,1

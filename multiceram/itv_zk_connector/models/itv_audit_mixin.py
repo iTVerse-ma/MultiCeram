@@ -14,21 +14,34 @@ from odoo.http import request
 FORWARDED_HEADERS = ('X-Forwarded-For', 'X-Real-IP')
 
 
-class ItvAuditMixin(models.AbstractModel):
-    _name = 'itv.audit.mixin'
-    _description = "Traçabilité des actions MultiCeram"
-    _inherit = ['mail.thread']
+class MailThread(models.AbstractModel):
+    """Les outils de traçabilité vivent sur la discussion : tout modèle qui en a une en dispose."""
+    _inherit = 'mail.thread'
 
     def _itv_audit(self, summary, details=None):
-        """Note interne : l'action, son auteur et son origine."""
+        """Note interne : ce qui a été fait, le détail élément par élément, puis l'origine.
+
+        `details` accepte une phrase ou une liste de lignes ; les lignes sont présentées en
+        liste à puces, comme les notes du journal de synchronisation.
+        """
         origin = self._itv_audit_origin()
         # Markup : le corps est du HTML, les valeurs sont échappées une par une.
         body = Markup("<p><b>%s</b></p>") % summary
-        if details:
+        if isinstance(details, (list, tuple)):
+            lines = [line for line in details if line]
+            if lines:
+                body += Markup("<ul>%s</ul>") % Markup().join(Markup("<li>%s</li>") % line for line in lines)
+        elif details:
             body += Markup("<p>%s</p>") % details
         body += Markup("<p class='text-muted small'>%s</p>") % origin
         for record in self:
             record.message_post(body=body, subtype_xmlid='mail.mt_note')
+
+    @staticmethod
+    def _itv_hours(value):
+        """Heures en HH:MM, comme partout dans les écrans."""
+        value = value or 0.0
+        return "%02d:%02d" % (int(value), round((value - int(value)) * 60))
 
     @api.model
     def _itv_audit_origin(self):
@@ -57,3 +70,10 @@ class ItvAuditMixin(models.AbstractModel):
                 # X-Forwarded-For liste les relais : le client est en tête.
                 return value.split(',')[0].strip()
         return request.httprequest.remote_addr
+
+
+class ItvAuditMixin(models.AbstractModel):
+    """Ajoute une discussion aux modèles MultiCeram qui n'en ont pas encore."""
+    _name = 'itv.audit.mixin'
+    _description = "Traçabilité des actions MultiCeram"
+    _inherit = ['mail.thread']

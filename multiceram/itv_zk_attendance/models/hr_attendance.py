@@ -74,6 +74,33 @@ class HrAttendance(models.Model):
                 and (attendance.check_in, attendance.check_out)
                 != (attendance.itv_computed_check_in, attendance.itv_computed_check_out))
 
+    @api.model_create_multi
+    def create(self, vals_list):
+        """Présence saisie à la main : elle rejoint sa journée de pointage et y fait foi.
+
+        Sans ce rattachement, le recalcul de la journée en créerait une seconde à côté, et
+        l'écran signalerait une présence non reportée.
+        """
+        attendances = super().create(vals_list)
+        if self.env.context.get('itv_attendance_sync'):
+            return attendances
+        Day = self.env['itv.attendance.day'].sudo()
+        for attendance in attendances.filtered(lambda record: not record.itv_day_id and record.check_in):
+            day = Day._itv_day_for(attendance.employee_id, attendance.check_in)
+            if not day:
+                continue
+            attendance.with_context(itv_attendance_sync=True).write({
+                'itv_day_id': day.id, 'itv_manual_override': True,
+            })
+            attendance._itv_audit(_("Présence saisie à la main"), [
+                _("Employé : %s", attendance.employee_id.display_name),
+                _("Journée : %s", day.date),
+                _("Arrivée : %s", attendance.check_in),
+                _("Départ : %s", attendance.check_out or _("en cours")),
+                _("Le recalcul des pointages ne l'écrasera pas."),
+            ])
+        return attendances
+
     def write(self, vals):
         corrected = self.filtered('itv_day_id') if (
             not self.env.context.get('itv_attendance_sync') and {'check_in', 'check_out'} & set(vals)) else self.browse()

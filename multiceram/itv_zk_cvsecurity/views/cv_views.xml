@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="utf-8"?>
+<odoo>
+    <!-- Connexions : CVSecurity est un type de connexion, sur la même fiche que BioTime. -->
+    <record id="itv_zk_backend_view_form_cv" model="ir.ui.view">
+        <field name="name">itv.zk.backend.form.cv</field>
+        <field name="model">itv.zk.backend</field>
+        <field name="inherit_id" ref="itv_zk_connector.itv_zk_backend_view_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//div[@name='button_box']" position="inside">
+                <button name="action_view_transactions" type="object" class="oe_stat_button" icon="fa-exchange">
+                    <field name="punch_count" widget="statinfo" string="Transactions"/>
+                </button>
+            </xpath>
+            <xpath expr="//field[@name='url']" position="after">
+                <field name="token" password="True" invisible="kind != 'cvsecurity'" string="Jeton d'accès (access_token)"/>
+                <field name="verify_ssl" invisible="kind != 'cvsecurity'"/>
+            </xpath>
+            <xpath expr="//field[@name='overlap_minutes']" position="after">
+                <field name="cv_watermark" invisible="kind != 'cvsecurity'"/>
+                <field name="cv_last_run" invisible="kind != 'cvsecurity'"/>
+            </xpath>
+            <xpath expr="//page[@name='howto']" position="after">
+                <page string="Comment remplir cette fiche" name="howto_cv" invisible="kind != 'cvsecurity'">
+                    <div class="mt16">
+                        <p><b>URL</b> : l'adresse de CVSecurity, port compris (8098 par défaut), joignable depuis le
+                           serveur Odoo : <code>https://192.168.127.110:8098/</code>.</p>
+                        <p><b>Jeton d'accès</b> : dans CVSecurity, <b>Système → Autorisation API</b>, créez un client API ;
+                           son jeton est le paramètre <code>access_token</code> de l'API v2.</p>
+                        <p><b>Vérifier le certificat</b> : à décocher pour l'installation par défaut de CVSecurity
+                           (HTTPS avec un certificat auto-signé).</p>
+                        <p><b>Lecteurs</b> : chaque lecteur apparaît dans le bouton <b>Terminaux</b> au premier passage,
+                           avec le numéro <code>CV:&lt;nom du lecteur&gt;</code>. « Hors » donne une sortie, « En » une
+                           entrée ; corrigez l'usage et le sens comme pour une pointeuse.</p>
+                        <p><b>Employés</b> : saisissez le PIN CVSecurity sur la fiche employé. Les passages déjà arrivés
+                           rejoignent alors l'employé.</p>
+                        <p>Les passages deviennent des <b>transactions</b>, au même format que celles de BioTime.</p>
+                    </div>
+                </page>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Transactions : la source et le PIN CVSecurity, et un filtre pour les retrouver. -->
+    <record id="itv_zk_punch_view_list_cv" model="ir.ui.view">
+        <field name="name">itv.zk.punch.list.cv</field>
+        <field name="model">itv.zk.punch</field>
+        <field name="inherit_id" ref="itv_zk_connector.itv_zk_punch_view_list"/>
+        <field name="arch" type="xml">
+            <xpath expr="//list" position="inside">
+                <field name="source" optional="hide"/>
+                <field name="cv_pin" optional="hide"/>
+            </xpath>
+        </field>
+    </record>
+
+    <record id="itv_zk_punch_view_search_cv" model="ir.ui.view">
+        <field name="name">itv.zk.punch.search.cv</field>
+        <field name="model">itv.zk.punch</field>
+        <field name="inherit_id" ref="itv_zk_connector.itv_zk_punch_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//search" position="inside">
+                <filter string="Lecteurs CVSecurity" name="cvsecurity" domain="[('source', '=', 'cvsecurity')]"/>
+                <field name="cv_pin"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Terminaux : filtre des lecteurs CVSecurity à côté de BioTime. -->
+    <record id="itv_zk_terminal_view_search_cv" model="ir.ui.view">
+        <field name="name">itv.zk.terminal.search.cv</field>
+        <field name="model">itv.zk.terminal</field>
+        <field name="inherit_id" ref="itv_zk_connector.itv_zk_terminal_view_search"/>
+        <field name="arch" type="xml">
+            <xpath expr="//filter[@name='kind_biotime']" position="after">
+                <filter string="CVSecurity" name="kind_cvsecurity" domain="[('backend_kind', '=', 'cvsecurity')]"/>
+            </xpath>
+        </field>
+    </record>
+
+    <!-- Fiche employé : les PIN CVSecurity avec les autres identifiants de pointage. -->
+    <record id="view_employee_form_itv_cv" model="ir.ui.view">
+        <field name="name">hr.employee.form.itv.cv</field>
+        <field name="model">hr.employee</field>
+        <field name="inherit_id" ref="hr.view_employee_form"/>
+        <field name="arch" type="xml">
+            <xpath expr="//group[@name='identification_group']" position="inside">
+                <field name="itv_cv_pin"/>
+                <field name="itv_cv_pin2"/>
+            </xpath>
+        </field>
+    </record>
+</odoo>

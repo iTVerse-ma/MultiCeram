@@ -4,25 +4,77 @@
         <field name="name">itv.attendance.anomaly.type.list</field>
         <field name="model">itv.attendance.anomaly.type</field>
         <field name="arch" type="xml">
-            <list string="Types d'anomalie" editable="bottom" create="0" delete="0">
+            <list string="Types d'anomalie">
                 <field name="sequence" widget="handle"/>
                 <field name="name"/>
-                <field name="code" readonly="1"/>
-                <field name="description"/>
+                <field name="is_builtin" string="Règle du calcul"/>
+                <field name="condition" invisible="is_builtin" optional="show"/>
+                <field name="day_count" string="Journées concernées"/>
+                <field name="code" optional="hide"/>
+                <field name="description" optional="hide"/>
                 <field name="active" widget="boolean_toggle"/>
             </list>
+        </field>
+    </record>
+
+    <record id="itv_attendance_anomaly_type_view_form" model="ir.ui.view">
+        <field name="name">itv.attendance.anomaly.type.form</field>
+        <field name="model">itv.attendance.anomaly.type</field>
+        <field name="arch" type="xml">
+            <form string="Type d'anomalie">
+                <header>
+                    <button name="action_apply_now" type="object" string="Appliquer maintenant"
+                            class="btn-primary" invisible="is_builtin"
+                            help="Rejoue la condition sur tout l'historique."/>
+                </header>
+                <sheet>
+                    <widget name="web_ribbon" title="Inactif" bg_color="text-bg-danger" invisible="active"/>
+                    <div class="oe_button_box" name="button_box">
+                        <button name="action_view_days" type="object" class="oe_stat_button" icon="fa-calendar">
+                            <field name="day_count" widget="statinfo" string="Journées"/>
+                        </button>
+                    </div>
+                    <div class="oe_title">
+                        <label for="name"/>
+                        <h1><field name="name" placeholder="ex. Absence non justifiée"/></h1>
+                    </div>
+                    <div class="alert alert-info mb-0" role="alert" invisible="not is_builtin">
+                        Type reconnu par le calcul : sa règle est écrite dans le code et ne se modifie pas ici.
+                        Vous pouvez le renommer, le décrire, changer son ordre, ou le désactiver pour que ces
+                        journées ne soient plus signalées.
+                    </div>
+                    <group>
+                        <group>
+                            <field name="is_builtin"/>
+                            <field name="code"/>
+                            <field name="sequence"/>
+                            <field name="active"/>
+                        </group>
+                        <group string="Condition" invisible="is_builtin">
+                            <field name="condition" widget="domain" options="{'model': 'itv.attendance.day'}" nolabel="1"/>
+                        </group>
+                    </group>
+                    <group string="Explication">
+                        <field name="description" nolabel="1"
+                               placeholder="Ce que ce type signale, et ce que les RH doivent en faire."/>
+                    </group>
+                </sheet>
+            </form>
         </field>
     </record>
 
     <record id="itv_attendance_anomaly_type_action" model="ir.actions.act_window">
         <field name="name">Types d'anomalie</field>
         <field name="res_model">itv.attendance.anomaly.type</field>
-        <field name="view_mode">list</field>
+        <field name="view_mode">list,form</field>
         <field name="view_id" ref="itv_attendance_anomaly_type_view_list"/>
         <field name="context">{'active_test': False}</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">Aucun type d'anomalie</p>
-            <p>Renommez les types, changez leur ordre, ou désactivez-en un pour que les journées concernées ne soient plus signalées.</p>
+            <p>Les quatre types du calcul (pointage impair, porte impaire, détecté présent, présence non reportée)
+               ont leur règle dans le code : renommez-les, réordonnez-les ou désactivez-les.</p>
+            <p>Vos propres types portent une condition sur la journée — absence, temps de travail, dimanche
+               travaillé — et signalent les journées qui la remplissent.</p>
         </field>
     </record>
 

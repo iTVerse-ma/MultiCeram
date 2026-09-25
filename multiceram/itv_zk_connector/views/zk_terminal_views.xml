@@ -6,6 +6,8 @@
         <field name="arch" type="xml">
             <list string="Terminaux" decoration-danger="offline_since" decoration-warning="usage == 'unclassified'">
                 <field name="alias"/>
+                <field name="backend_id"/>
+                <field name="backend_kind" optional="show"/>
                 <field name="sn"/>
                 <field name="area_name" optional="show"/>
                 <field name="usage"/>
@@ -16,7 +18,6 @@
                 <field name="ip_address" optional="hide"/>
                 <field name="last_activity" optional="show"/>
                 <field name="offline_since" optional="show"/>
-                <field name="backend_id"/>
                 <field name="active" column_invisible="True"/>
             </list>
         </field>
@@ -73,12 +74,15 @@
                 <field name="alias"/>
                 <field name="sn"/>
                 <field name="backend_id"/>
+                <filter string="BioTime" name="kind_biotime" domain="[('backend_kind', '=', 'biotime')]"/>
+                <separator/>
                 <filter string="À classer" name="unclassified" domain="[('usage', '=', 'unclassified')]"/>
                 <filter string="Hors ligne" name="offline" domain="[('offline_since', '!=', False)]"/>
                 <separator/>
                 <filter string="Archivés" name="inactive" domain="[('active', '=', False)]"/>
                 <group>
                     <filter string="Usage" name="group_usage" context="{'group_by': 'usage'}"/>
+                    <filter string="Type" name="group_kind" context="{'group_by': 'backend_kind'}"/>
                     <filter string="Connexion" name="group_backend" context="{'group_by': 'backend_id'}"/>
                 </group>
             </search>
@@ -91,7 +95,7 @@
         <field name="view_mode">list,form</field>
         <field name="help" type="html">
             <p class="o_view_nocontent_smiling_face">Aucun terminal</p>
-            <p>Les terminaux sont créés par la synchronisation BioTime. Indiquez ensuite leur usage et leur sens.</p>
+            <p>Les terminaux sont créés par la synchronisation (pointeuses BioTime, lecteurs CVSecurity). Indiquez ensuite leur usage et leur sens.</p>
         </field>
     </record>
 </odoo>

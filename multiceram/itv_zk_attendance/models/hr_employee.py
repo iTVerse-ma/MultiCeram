@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
 from odoo import _, api, fields, models
 
-LEGACY_SETTINGS = ('itv_schedule_type', 'itv_day_hours', 'itv_week_hours', 'itv_auto_pause', 'itv_ignore_uhf')
+LEGACY_SETTINGS = ('itv_schedule_type', 'itv_day_hours', 'itv_week_hours', 'itv_auto_pause',
+                   'itv_ignore_uhf', 'resource_calendar_id')
 PROFILE_FIELDS = {'itv_schedule_type', 'itv_week_hours'}
 
 
@@ -16,6 +17,8 @@ class HrEmployee(models.Model):
                                  help="Norme journalière du calcul historique ; vide = 8 h.")
     itv_week_hours = fields.Integer("Heures par semaine", groups='hr.group_hr_user',
                                     help="44 : le samedi compte 4 h pour l'horaire « Normal ».")
+    itv_shift_plan_ids = fields.One2many('itv.employee.shift', 'employee_id', string="Planning des horaires",
+                                         groups='hr.group_hr_user')
     itv_auto_pause = fields.Boolean("Pause automatique", groups='hr.group_hr_user',
                                     help="Déduit toujours une heure de pause dans le calcul historique.")
     itv_overtime_eligible = fields.Boolean("Heures supplémentaires autorisées", groups='hr.group_hr_user')

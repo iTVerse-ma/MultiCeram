@@ -7,7 +7,7 @@ from dateutil.relativedelta import relativedelta
 from odoo import _, api, fields, models
 from odoo.exceptions import UserError, ValidationError
 from odoo.tools import float_compare, format_date
-from odoo.addons.itv_zk_connector.services.timeutils import local_to_utc, parse_local
+from odoo.addons.itv_zk_connector.services.timeutils import local_to_utc, parse_local, utc_to_local
 
 from ..services.legacy_engine import (
     LegacyEmployeeSettings,
@@ -104,6 +104,17 @@ class ItvAttendanceDay(models.Model):
     anomaly_resolution = fields.Selection([('justified', "Justifiée"), ('ignored', "Ignorée")],
                                           string="Traitement de l'anomalie", copy=False, tracking=True)
     anomaly_note = fields.Char("Motif de l'anomalie", tracking=True)
+    itv_calendar_id = fields.Many2one(
+        'resource.calendar', string="Horaire", readonly=True, ondelete='set null', index='btree_not_null',
+        help="Horaire appliqué à cette journée, d'après le planning du responsable ou la fiche de l'employé.")
+    itv_late_minutes = fields.Integer("Retard (min)", readonly=True,
+                                      help="Minutes entre le début du poste et le premier pointage, tolérance déduite.")
+    itv_early_minutes = fields.Integer("Départ anticipé (min)", readonly=True,
+                                       help="Minutes entre le dernier pointage et la fin du poste.")
+    anomaly_custom_type_ids = fields.Many2many(
+        'itv.attendance.anomaly.type', 'itv_day_anomaly_type_rel', 'day_id', 'type_id',
+        string="Règles déclenchées", readonly=True,
+        help="Types d'anomalie créés par les RH dont la condition est remplie par cette journée.")
     anomaly_state = fields.Selection(ANOMALY_STATES, string="Anomalie", compute='_compute_anomaly_state', store=True,
                                      help="Pointage de présence ou de porte impair, détecté présent, ou présence non reportée.")
 
@@ -151,10 +162,52 @@ class ItvAttendanceDay(models.Model):
             day.last_punch_label = "%s%s" % (last[11:16], next_day) if last else False
 
     @api.depends(*[name for name, _label in ANOMALY_LABELS])
+    @api.depends('lg_presence_anomaly', 'lg_door_anomaly', 'lg_detected_present', 'attendance_conflict',
+                 'anomaly_custom_type_ids')
     def _compute_anomaly_label(self):
         labels = self.env['itv.attendance.anomaly.type']._labels_by_field()
         for day in self:
-            day.anomaly_label = ", ".join(label for name, label in labels.items() if day[name]) or False
+            found = [label for name, label in labels.items() if day[name]]
+            found += day.anomaly_custom_type_ids.mapped('name')
+            day.anomaly_label = ", ".join(found) or False
+
+    def _itv_apply_shift(self):
+        """Horaire appliqué à la journée ; retard et départ anticipé mesurés sur ses bornes."""
+        Plan = self.env['itv.employee.shift']
+        for day in self:
+            calendar = Plan._calendar_for(day.employee_id, day.date)
+            vals = {'itv_calendar_id': calendar.id or False, 'itv_late_minutes': 0, 'itv_early_minutes': 0}
+            first = parse_local(day.lg_first_punch) if day.lg_first_punch else None
+            last = parse_local(day.lg_last_punch) if day.lg_last_punch else None
+            worked_day = first and not day.has_leave and not day.is_holiday and not day.is_rest_day
+            if calendar and worked_day:
+                start, end = calendar._itv_day_bounds(day.date)
+                if start:
+                    late = (first - start).total_seconds() / 60.0
+                    vals['itv_late_minutes'] = max(int(round(late)) - (calendar.itv_late_tolerance or 0), 0)
+                if end and last:
+                    vals['itv_early_minutes'] = max(int(round((end - last).total_seconds() / 60.0)), 0)
+            day._write_changed(vals)
+
+    @api.model
+    def _apply_custom_anomaly_types(self, days=None, types=None):
+        """Applique les conditions des types créés par les RH aux journées indiquées.
+
+        Sans journées, la condition est rejouée sur tout l'historique : c'est le bouton
+        « Appliquer maintenant » de la fiche du type.
+        """
+        AnomalyType = self.env['itv.attendance.anomaly.type'].sudo()
+        types = types if types is not None else AnomalyType._custom_types()
+        types = types.filtered(lambda record: not record.is_builtin)
+        if not types:
+            return
+        Day = self.sudo()
+        for anomaly_type in types:
+            scope = [('id', 'in', days.ids)] if days is not None else []
+            matched = Day.search(anomaly_type._condition_domain() + scope) if anomaly_type.active else Day.browse()
+            current = Day.search([('anomaly_custom_type_ids', 'in', anomaly_type.id)] + scope)
+            (matched - current).write({'anomaly_custom_type_ids': [(4, anomaly_type.id)]})
+            (current - matched).write({'anomaly_custom_type_ids': [(3, anomaly_type.id)]})
 
     def _report_pages(self):
         """PDF mensuel : une page par employé et par mois, journées dans l'ordre, totaux du pied de page d'origine."""
@@ -186,12 +239,13 @@ class ItvAttendanceDay(models.Model):
         for day in self:
             day.display_name = "%s — %s" % (day.employee_id.name or '', format_date(self.env, day.date)) if day.date else ''
 
-    @api.depends('lg_presence_anomaly', 'lg_door_anomaly', 'lg_detected_present', 'attendance_conflict', 'anomaly_resolution')
+    @api.depends('lg_presence_anomaly', 'lg_door_anomaly', 'lg_detected_present', 'attendance_conflict',
+                 'anomaly_resolution', 'anomaly_custom_type_ids')
     def _compute_anomaly_state(self):
         # Seuls les types d'anomalie actifs (Configuration) signalent une journée.
         names = self.env['itv.attendance.anomaly.type']._active_fields()
         for day in self:
-            has_anomaly = any(day[name] for name in names)
+            has_anomaly = any(day[name] for name in names) or bool(day.anomaly_custom_type_ids)
             day.anomaly_state = (day.anomaly_resolution or 'open') if has_anomaly else False
 
     @api.depends('overtime_line_ids.duration', 'overtime_line_ids.itv_state')
@@ -227,7 +281,9 @@ class ItvAttendanceDay(models.Model):
                 or self._has_moved_punches(employee, month, end)
             )
             if whole_month:
-                self._recompute_legacy_month(employee, month)
+                # Demande explicite : la journée est créée même sans le moindre pointage,
+                # sinon une absence complète ne laisserait aucune ligne à l'écran.
+                self._recompute_legacy_month(employee, month, force=True)
                 continue
             for date in sorted(month_dates):
                 self._recompute_legacy_day(employee, date)
@@ -245,6 +301,9 @@ class ItvAttendanceDay(models.Model):
             day._write_changed(vals)
         else:
             self.create(dict(vals, employee_id=employee.id, date=date))
+        days = self.search([('employee_id', '=', employee.id), ('date', '=', date)])
+        days._itv_apply_shift()
+        self._apply_custom_anomaly_types(days=days)
         self._sync_attendances(employee, date, date)
 
     @api.model
@@ -265,10 +324,11 @@ class ItvAttendanceDay(models.Model):
         try:
             page = compute_legacy_page(
                 start, end, self._legacy_punches(employee, start, end),
-                self._legacy_settings(employee),
+                self._legacy_settings(employee, start, end),
                 holidays=self._legacy_holidays(employee),
                 leaves=self._legacy_leaves(employee),
                 overtime_rows=self._legacy_overtime_rows(employee, start, end),
+                rest_days=self._rest_days(employee, start, end),
             )
         except LegacyPageError:
             return None
@@ -293,7 +353,7 @@ class ItvAttendanceDay(models.Model):
 
     @api.model
     def _legacy_starts_clean(self, employee, date):
-        settings = self._legacy_settings(employee)
+        settings = self._legacy_settings(employee, date, date)
         punches = [punch for punch in self._legacy_punches(employee, date, date)
                    if not punch.duplicate and not punch.to_delete and not (settings.ignore_uhf and punch.uhf_bridge)]
         punches.sort(key=lambda punch: (punch.local_time, punch.id))
@@ -301,7 +361,7 @@ class ItvAttendanceDay(models.Model):
         return all(punch.direction != 'out' for punch in punches[:2])
 
     @api.model
-    def _recompute_legacy_month(self, employee, month):
+    def _recompute_legacy_month(self, employee, month, force=False):
         employee = employee.sudo()
         start = month.replace(day=1)
         end = start + relativedelta(months=1, days=-1)
@@ -309,16 +369,17 @@ class ItvAttendanceDay(models.Model):
             return
         existing = {day.date: day for day in self.search([('employee_id', '=', employee.id), ('date', '>=', start), ('date', '<=', end)])}
         punches = self._legacy_punches(employee, start, end)
-        if not punches and not existing:
-            # Mois sans pointage (ex. congé futur) : la page d'origine n'y avait rien à montrer.
+        if not punches and not existing and not force:
+            # Mois sans pointage et sans demande explicite : rien à écrire.
             return
         try:
             page = compute_legacy_page(
                 start, end, punches,
-                self._legacy_settings(employee),
+                self._legacy_settings(employee, start, end),
                 holidays=self._legacy_holidays(employee),
                 leaves=self._legacy_leaves(employee),
                 overtime_rows=self._legacy_overtime_rows(employee, start, end),
+                rest_days=self._rest_days(employee, start, end),
             )
             rows = {day.day: self._legacy_day_vals(day) for day in page.days}
         except LegacyPageError as exc:
@@ -340,6 +401,9 @@ class ItvAttendanceDay(models.Model):
                 to_create.append(dict(vals, employee_id=employee.id, date=day))
         if to_create:
             self.create(to_create)
+        days = self.search([('employee_id', '=', employee.id), ('date', '>=', start), ('date', '<=', end)])
+        days._itv_apply_shift()
+        self._apply_custom_anomaly_types(days=days)
         self._sync_attendances(employee, start, end)
 
     def _write_changed(self, vals):
@@ -379,26 +443,52 @@ class ItvAttendanceDay(models.Model):
 
     @api.model
     def _legacy_punches(self, employee, start, end):
+        # Un poste de nuit finit le lendemain : on va chercher les pointages du jour suivant.
+        calendars = self.env['itv.employee.shift']._calendars_for_range(employee, start, end + timedelta(days=1))
+        overnight = any(calendar.itv_overnight for calendar in calendars.values())
         punches = self.env['itv.zk.punch'].sudo().search([
-            ('employee_id', '=', employee.id), ('punch_date', '>=', start), ('punch_date', '<=', end),
+            ('employee_id', '=', employee.id), ('punch_date', '>=', start),
+            ('punch_date', '<=', end + timedelta(days=1) if overnight else end),
         ])
-        return [
-            LegacyPunch(
+        rows = []
+        for punch in punches:
+            local = parse_local(punch.punch_local)
+            rows.append(LegacyPunch(
                 id=punch.id,
-                local_time=parse_local(punch.punch_local),
+                local_time=local,
                 usage=None if punch.terminal_id.itv_legacy_presence else (punch.usage or None),
                 direction=punch.direction if punch.direction in ('in', 'out') else None,
                 duplicate=punch.duplicate,
                 to_delete=punch.to_delete,
-                date_override=punch.date_override or None,
+                # La correction manuelle prime sur le rattachement automatique du poste.
+                date_override=punch.date_override or self._itv_shift_day(calendars, local, end),
                 uhf_bridge=punch.terminal_id.is_uhf_bridge,
-            )
-            for punch in punches
-        ]
+            ))
+        return rows
 
     @api.model
-    def _legacy_settings(self, employee):
+    def _itv_shift_day(self, calendars, local, end):
+        """Journée à laquelle rattacher un pointage d'après-minuit d'un poste de nuit."""
+        previous = local.date() - timedelta(days=1)
+        calendar = calendars.get(previous)
+        if not calendar or not calendar.itv_overnight:
+            return None
+        _start, finish = calendar._itv_day_bounds(previous)
+        # Le poste de la veille court jusqu'à sa fin : tout ce qui précède lui revient.
+        if finish and local < finish + timedelta(hours=2):
+            return previous if previous <= end else None
+        return None
+
+    @api.model
+    def _legacy_settings(self, employee, start=None, end=None):
+        # Les postes peuvent changer d'un jour à l'autre : la norme suit le poste du jour.
+        by_date = ()
+        if start and end:
+            calendars = self.env['itv.employee.shift']._calendars_for_range(employee, start, end)
+            by_date = tuple((day, calendar._itv_expected_hours(day)) for day, calendar in calendars.items()
+                            if calendar.itv_is_shift and calendar._itv_expected_hours(day))
         return LegacyEmployeeSettings(
+            day_hours_by_date=by_date,
             schedule_type=employee.itv_schedule_type or None,
             day_hours=employee.itv_day_hours or None,
             week_hours=employee.itv_week_hours or None,
@@ -500,6 +590,20 @@ class ItvAttendanceDay(models.Model):
     # -- Présences -----------------------------------------------------------------------------
 
     @api.model
+    @api.model
+    def _itv_day_for(self, employee, moment):
+        """Journée de pointage correspondant à un instant UTC, créée au besoin."""
+        if not employee or not moment:
+            return self.browse()
+        local = utc_to_local(moment, employee.tz or DEFAULT_TZ)
+        date = local.date()
+        day = self.search([('employee_id', '=', employee.id), ('date', '=', date)], limit=1)
+        if not day:
+            day = self.create({'employee_id': employee.id, 'date': date})
+            # La journée entre dans la file : ses chiffres seront calculés au prochain passage.
+            self.env['itv.attendance.dirty']._enqueue([(employee.id, date)])
+        return day
+
     def _sync_attendances(self, employee, start, end):
         """Une présence par journée travaillée, du premier au dernier pointage retenu par le calcul historique.
 
@@ -590,7 +694,7 @@ class ItvAttendanceDay(models.Model):
 
     def _backend_timezone(self):
         backend = self.env['itv.zk.backend'].sudo().with_context(active_test=False).search(
-            [('company_id', '=', self.employee_id.company_id.id)], limit=1)
+            [('company_id', '=', self.employee_id.company_id.id)], order='kind, id', limit=1)
         return backend, (backend.timezone or DEFAULT_TZ)
 
     # -- Actions ---------------------------------------------------------------------------------

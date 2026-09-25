@@ -7,12 +7,22 @@
         <field name="inherit_id" ref="itv_zk_attendance.itv_overtime_line_view_list"/>
         <field name="arch" type="xml">
             <xpath expr="//field[@name='itv_state']" position="before">
-                <field name="itv_system_hours" widget="float_time" optional="show"/>
-                <field name="itv_declared_hours" widget="float_time" optional="show"
+                <field name="itv_system_hours" string="HS détect." widget="float_time" optional="show"/>
+                <field name="itv_declared_hours" string="HS décl." widget="float_time" optional="show"
                        invisible="itv_declaration_state != 'answered'"/>
+                <field name="itv_declaration_gap" string="Écart" widget="float_time" optional="show"
+                       invisible="itv_declaration_state != 'answered'"
+                       decoration-danger="itv_declaration_gap &lt; 0" decoration-bf="itv_declaration_gap &lt; 0"/>
                 <field name="itv_declaration_state" widget="badge" optional="show"
                        decoration-info="itv_declaration_state == 'asked'"
                        decoration-primary="itv_declaration_state == 'answered'"/>
+                <field name="itv_declared_answer_date" string="Déclarée le" optional="show"
+                       invisible="itv_declaration_state != 'answered'"/>
+            </xpath>
+            <!-- La décision (heures retenues, taux) se lit après les chiffres qu'elle arbitre. -->
+            <xpath expr="//field[@name='itv_declaration_gap']" position="after">
+                <xpath expr="//field[@name='duration']" position="move"/>
+                <xpath expr="//field[@name='itv_rate']" position="move"/>
             </xpath>
             <xpath expr="//list/button[@name='action_itv_validate_1']" position="before">
                 <button name="action_itv_ask_declaration" type="object" icon="fa-question-circle"
